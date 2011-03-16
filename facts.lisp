@@ -86,9 +86,9 @@
 (defun db-clear ()
   (setf *db* (make-db)))
 
-(defun db-insert (fact-spec &optional (db *db*))
-  (or (llrbtree:tree-get fact-spec (db-spo-tree db))
-      (let ((fact (make-fact/v fact-spec)))
+(defun db-insert (subject predicate object &optional (db *db*))
+  (let ((fact (make-fact/v subject predicate object)))
+    (or (llrbtree:tree-get fact (db-spo-tree db))
 	(setf (llrbtree:tree-get fact (db-spo-tree db)) fact
 	      (llrbtree:tree-get fact (db-pos-tree db)) fact
 	      (llrbtree:tree-get fact (db-osp-tree db)) fact))))
@@ -134,3 +134,32 @@
 (defun fact-prefixp/os (fact object subject)
   (and (equal (fact-object fact) object)
        (equal (fact-subject fact) subject)))
+
+;;  Bindings
+
+(defun binding-p (sym)
+  (when (typep sym 'symbol)
+    (char= #\? (char (symbol-name sym) 0))))
+
+(binding-p "plop")
+
+(defun collect-bindings (form &optional bindings)
+  (etypecase form
+    (null bindings)
+    (symbol (if (binding-p form)
+		(pushnew form bindings)
+		bindings))
+    (cons (collect-bindings (car form)
+			    (collect-bindings (cdr form)
+					      bindings)))))
+
+(defmacro add (&rest facts-definition)
+  (let* ((bindings (collect-bindings facts-definition)))
+    `(progn
+       ,@(mapcar (lambda (fact)
+		   `(db-insert ,@fact))
+		 (sublis (mapcar (lambda (var)
+				   (cons var
+					 (gensym (symbol-name var))))
+				 bindings)
+			 facts-definition)))))
