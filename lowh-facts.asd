@@ -16,6 +16,6 @@
   :author "Thomas de Grivel <billitch@gmail.com>"
   :version "0.1"
   :description "facts database"
-  :depends-on ("lessp" "com.informatimago.common-lisp")
+  :depends-on ("lessp" "com.informatimago.common-lisp.llrbtree")
   :components
   ((:file "facts")))
