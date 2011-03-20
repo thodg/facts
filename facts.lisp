@@ -9,7 +9,7 @@
 (defpackage :lowh-facts
   (:nicknames :facts)
   (:use :cl :lessp)
-  (:export #:add #:do-facts/sp))
+  (:export #:add #:with))
 
 (in-package :lowh-facts)
 
@@ -86,6 +86,9 @@
 (defun db-clear ()
   (setf *db* (make-db)))
 
+(defun db-get (fact &optional (db *db*))
+  (llrbtree:tree-get fact (db-spo-tree db)))
+
 (defun db-insert (subject predicate object &optional (db *db*))
   (let ((fact (make-fact/v subject predicate object)))
     (or (llrbtree:tree-get fact (db-spo-tree db))
@@ -101,65 +104,101 @@
       (llrbtree:tree-delete fact (db-osp-tree db))
       fact)))
 
-;;  Prefix
-
-(defun fact/v-prefixp/s (fact subject)
-  (equal (fact/v-subject fact) subject))
-
-(defun fact/v-prefixp/p (fact predicate)
-  (equal (fact/v-predicate fact) predicate))
-
-(defun fact/v-prefixp/o (fact object)
-  (equal (fact/v-object fact) object))
-
-(defun fact/v-prefixp/sp (fact subject predicate)
-  (and (equal (fact/v-subject fact) subject)
-       (equal (fact/v-predicate fact) predicate)))
-
-(defmacro do-facts/sp (s p o db &body body)
-  (let ((key (gensym "KEY"))
-	(fact (gensym "FACT")))
-    `(llrbtree:map-tree (lambda (,key ,fact)
-			  (let ((,o (fact-object/v ,fact)))
-			    (unless (fact/v-prefixp/sp ,fact ,s ,p)
-			      (return-from llrbtree:map-tree (values)))
-			    ,@body))
-			(db-spo-tree ,db)
-			:start (make-fact/v ,s ,p nil))))
-
-(defun fact-prefixp/po (fact predicate object)
-  (and (equal (fact-predicate fact) predicate)
-       (equal (fact-object fact) object)))
-
-(defun fact-prefixp/os (fact object subject)
-  (and (equal (fact-object fact) object)
-       (equal (fact-subject fact) subject)))
-
 ;;  Bindings
 
-(defun binding-p (sym)
+(defun binding-symbol-p (sym)
   (when (typep sym 'symbol)
     (char= #\? (char (symbol-name sym) 0))))
 
-(binding-p "plop")
+(defstruct binding name bound)
 
-(defun collect-bindings (form &optional bindings)
-  (etypecase form
+(defun collect-bindings% (form &optional bindings)
+  (typecase form
     (null bindings)
-    (symbol (if (binding-p form)
+    (symbol (if (binding-symbol-p form)
 		(pushnew form bindings)
 		bindings))
-    (cons (collect-bindings (car form)
-			    (collect-bindings (cdr form)
-					      bindings)))))
+    (cons (collect-bindings% (car form)
+			     (collect-bindings% (cdr form)
+						bindings)))
+    (t bindings)))
+
+(defun collect-bindings (form)
+  (mapcar (lambda (name)
+	    (make-binding :name name))
+	  (collect-bindings% form)))
+
+(defun replace-bindings (bindings form)
+  (sublis (mapcar (lambda (b) `(,(binding-name b) . ,b)) bindings)
+	  form))
 
 (defmacro add (&rest facts-definition)
-  (let* ((bindings (collect-bindings facts-definition)))
-    `(progn
+  (let ((bindings (collect-bindings facts-definition)))
+    `(let ,(mapcar (lambda (b)
+		     `(,(binding-name b)
+			',(gensym (concatenate 'string
+					       (symbol-name (binding-name b))
+					       "-"))))
+		   bindings)
        ,@(mapcar (lambda (fact)
 		   `(db-insert ,@fact))
-		 (sublis (mapcar (lambda (var)
-				   (cons var
-					 (gensym (symbol-name var))))
-				 bindings)
-			 facts-definition)))))
+		 facts-definition))))
+
+(defun binding-boundp (b)
+  (and (typep b 'binding)
+       (binding-bound b)))
+
+(defun binding-unboundp (b)
+  (and (typep b 'binding)
+       (not (binding-bound b))))
+
+(defmacro with/rec (((s p o) &rest bindings) &body body)
+  (let ((g!fact (gensym "FACT-"))
+	(g!value (gensym "VALUE-"))
+	(g!s (unless (binding-unboundp s) (gensym "S-")))
+	(g!p (unless (binding-unboundp p) (gensym "P-")))
+	(g!o (unless (binding-unboundp o) (gensym "O-")))
+	(?s (when (binding-unboundp s) (setf (binding-bound s) (binding-name s))))
+	(?p (when (binding-unboundp p) (setf (binding-bound p) (binding-name p))))
+	(?o (when (binding-unboundp o) (setf (binding-bound o) (binding-name o))))
+	(s (if (binding-p s) (binding-name s) s))
+	(p (if (binding-p p) (binding-name p) p))
+	(o (if (binding-p o) (binding-name o) o))
+	(body (if bindings `((with/rec ,bindings ,@body)) body)))
+    (cond ((and g!s g!p g!o)
+	   `(when (db-get (make-fact/v ,s ,p ,o))
+	      ,@body))
+	  ((not (or g!s g!p g!o))
+	   `(llrbtree:map-tree (lambda (,g!fact ,g!value)
+				 (declare (ignore ,g!value))
+				 (let ((,s (fact/v-subject ,g!fact))
+				       (,p (fact/v-predicate ,g!fact))
+				       (,o (fact/v-object ,g!fact)))
+				   ,@body))
+			       (db-spo-tree *db*)))
+	  (t
+	   `(let (,@(when g!s `((,g!s ,s)))
+		  ,@(when g!p `((,g!p ,p)))
+		  ,@(when g!o `((,g!o ,o))))
+	      (llrbtree:map-tree
+	       (lambda (,g!fact ,g!value)
+		 (declare (ignore ,g!value))
+		 (let (,@(when ?s `((,?s (fact/v-subject ,g!fact))))
+		       ,@(when ?p `((,?p (fact/v-predicate ,g!fact))))
+		       ,@(when ?o `((,?o (fact/v-object ,g!fact)))))
+		   (unless (and ,@(when g!s `((equal (fact/v-subject ,g!fact) ,g!s)))
+				,@(when g!p `((equal (fact/v-predicate ,g!fact) ,g!p)))
+				,@(when g!o `((equal (fact/v-object ,g!fact) ,g!o))))
+		     (return (values)))
+		   ,@body))
+	       (,(cond ((and g!s (or g!p (not g!o))) 'db-spo-tree)
+		       (g!p 'db-pos-tree)
+		       (t 'db-osp-tree))
+		 *db*)
+	       :start (make-fact/v ,g!s ,g!p ,g!o)))))))
+
+(defmacro with (bindings-spec &body body)
+  (let* ((bindings (collect-bindings bindings-spec)))
+    `(block nil
+       (with/rec ,(replace-bindings bindings bindings-spec)
+	 ,@body))))
