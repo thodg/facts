@@ -165,11 +165,9 @@
   (when (binding-p sym)
     (find sym env)))
 
-(eval-when (:compile-toplevel :load-toplevel)
-
-  (defun binding-unboundp (sym env)
-    (and (binding-p sym)
-	 (not (find sym env)))))
+(defun binding-unboundp (sym env)
+  (and (binding-p sym)
+       (not (find sym env))))
 
 ;;  WITH
 
@@ -255,35 +253,3 @@
 	 ,@(mapcar (lambda (fact)
 		     `(db-insert ,@fact))
 		   facts-definition)))))
-
-
-;;  Serialization
-
-(defun save-db (&optional dest)
-  (etypecase dest
-    ((or string pathname) (with-open-file (stream dest
-						  :direction :output
-						  :if-exists :supersede
-						  :if-does-not-exist :create)
-			    (save-db stream)))
-    (null (with-output-to-string (stream) (save-db stream)))
-    (stream (let ((*print-readably* t))
-	      (format dest "(~%")
-	      (with ((?s ?p ?o))
-		(let ((*print-case* :downcase))
-		  (format dest " (~S ~S ~S)~%" ?s ?p ?o))))
-	    (format dest ")")
-	    (force-output dest))))
-
-(defun load-db (src &optional (clear t))
-  (when clear
-    (facts:clear-db))
-
-  (etypecase src
-    (string (with-input-from-string (stream src) (load-db stream)))
-    (pathname (with-open-file (stream src)
-		(load-db stream)))
-    (stream (load-db (read src)))
-    (list (mapcar (lambda (fact)
-		    (apply #'db-insert fact))
-		  src))))

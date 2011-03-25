@@ -18,4 +18,5 @@
   :description "facts database"
   :depends-on ("lessp" "com.informatimago.common-lisp.llrbtree")
   :components
-  ((:file "facts")))
+  ((:file "facts")
+   (:file "serialize" :depends-on ("facts"))))
