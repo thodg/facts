@@ -259,9 +259,11 @@
 
 (defun save-db (&optional dest)
   (etypecase dest
-    ((or string pathname) (save-db (open dest :direction :output
-					 :if-exists :supersede
-					 :if-does-not-exist :create)))
+    ((or string pathname) (with-open-file (stream dest
+						  :direction :output
+						  :if-exists :supersede
+						  :if-does-not-exist :create)
+			    (save-db stream)))
     (null (with-output-to-string (stream) (save-db stream)))
     (stream (let ((*print-readably* t))
 	      (format dest "(~%")
@@ -277,7 +279,8 @@
 
   (etypecase src
     (string (with-input-from-string (stream src) (load-db stream)))
-    (pathname (load-db (open src)))
+    (pathname (with-open-file (stream src)
+		(load-db stream)))
     (stream (load-db (read src)))
     (list (mapcar (lambda (fact)
 		    (apply #'db-insert fact))
