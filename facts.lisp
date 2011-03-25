@@ -165,9 +165,11 @@
   (when (binding-p sym)
     (find sym env)))
 
-(defun binding-unboundp (sym env)
-  (and (binding-p sym)
-       (not (find sym env))))
+(eval-when (:compile-toplevel :load-toplevel)
+
+  (defun binding-unboundp (sym env)
+    (and (binding-p sym)
+	 (not (find sym env)))))
 
 ;;  WITH
 
