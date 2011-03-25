@@ -105,8 +105,16 @@
 
 (defvar *db* (make-db))
 
+(defun clear-package (package)
+  (let ((pkg (typecase package
+	       (package package)
+	       (t (find-package package)))))
+    (do-symbols (sym pkg)
+      (unintern sym pkg))))
+
 (defun clear-db ()
-  (setf *db* (make-db)))
+  (setf *db* (make-db))
+  (clear-package :lowh-facts.anon))
 
 (defun db-get (fact &optional (db *db*))
   (llrbtree:tree-get fact (db-spo-tree db)))
