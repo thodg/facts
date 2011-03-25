@@ -19,16 +19,16 @@
 (defpackage :lowh-facts.anon
   (:nicknames :facts.anon))
 
-(defun anon (name)
-  (let* ((upcase-name (string-upcase name))
+(defun anon (&rest name-hints)
+  (let* ((name (string-upcase (format nil "~{~A~^-~}" name-hints)))
 	 (anon-pkg (find-package :lowh-facts.anon))
-	 (sym (find-symbol upcase-name anon-pkg))
+	 (sym (find-symbol name anon-pkg))
 	 (count (when sym
 		  (setf (get sym 'anon-counter)
 			(1+ (or (get sym 'anon-counter) 0))))))
     (if count
-	(intern (format nil "~A-~4,'0X" upcase-name count) anon-pkg)
-	(intern upcase-name anon-pkg))))
+	(intern (format nil "~A-~4,'0X" name count) anon-pkg)
+	(intern name anon-pkg))))
 
 ;;  Fact
 
