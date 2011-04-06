@@ -21,7 +21,7 @@
 	      (with ((?s ?p ?o))
 		(let ((*print-case* :downcase))
 		  (format dest " (~S ~S ~S)~%" ?s ?p ?o))))
-	    (format dest ")")
+	    (format dest ")~%")
 	    (force-output dest))))
 
 (defun load-db (src &optional (clear t))
