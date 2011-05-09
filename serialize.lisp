@@ -13,7 +13,9 @@
     ((or string pathname) (with-open-file (stream dest
 						  :direction :output
 						  :if-exists :supersede
-						  :if-does-not-exist :create)
+						  :if-does-not-exist :create
+						  :element-type 'character
+						  :external-format :utf-8)
 			    (save-db stream)))
     (null (with-output-to-string (stream) (save-db stream)))
     (stream (let ((*print-readably* t))
@@ -30,7 +32,9 @@
 
   (etypecase src
     (string (with-input-from-string (stream src) (load-db stream)))
-    (pathname (with-open-file (stream src)
+    (pathname (with-open-file (stream src
+				      :element-type 'character
+				      :external-format :utf-8)
 		(load-db stream)))
     (stream (load-db (read src)))
     (list (mapcar (lambda (fact)
