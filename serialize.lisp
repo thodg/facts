@@ -8,23 +8,26 @@
 
 (in-package :lowh-facts)
 
-(defun save-db (&optional dest)
-  (etypecase dest
-    ((or string pathname) (with-open-file (stream dest
+(defmethod print-object ((x simple-base-string) s)
+  (format s "#.(coerce ~S 'simple-base-string)" (coerce x 'simple-string)))
+
+(defun save-db (&key into (readably t))
+  (etypecase into
+    ((or string pathname) (with-open-file (stream into
 						  :direction :output
 						  :if-exists :supersede
 						  :if-does-not-exist :create
 						  :element-type 'character
 						  :external-format :utf-8)
-			    (save-db stream)))
-    (null (with-output-to-string (stream) (save-db stream)))
-    (stream (let ((*print-readably* t))
-	      (format dest "(~%")
+			    (save-db :into stream :readably readably)))
+    (null (with-output-to-string (stream) (save-db :into stream :readably readably)))
+    (stream (let ((*print-readably* readably))
+	      (format into "(~%")
 	      (with ((?s ?p ?o))
 		(let ((*print-case* :downcase))
-		  (format dest " (~S ~S ~S)~%" ?s ?p ?o))))
-	    (format dest ")~%")
-	    (force-output dest))))
+		  (format into " (~S ~S ~S)~%" ?s ?p ?o))))
+	    (format into ")~%")
+	    (force-output into))))
 
 (defun load-db (src &optional (clear t))
   (when clear
