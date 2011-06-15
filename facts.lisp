@@ -10,7 +10,7 @@
   (:nicknames :facts)
   (:use :cl :lessp)
   (:export #:anon #:add #:rm #:with #:when-bound
-	   #:clear-db #:save-db #:load-db
+	   #:*db* #:clear-db #:save-db #:load-db #:make-db
 	   #:binding-p #:collect-bindings))
 
 (in-package :lowh-facts)
