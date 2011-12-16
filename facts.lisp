@@ -9,7 +9,7 @@
 (defpackage :lowh-facts
   (:nicknames :facts)
   (:use :cl :lessp)
-  (:export #:anon #:add #:rm #:with #:bound-p
+  (:export #:anon #:add #:rm #:with #:bound-p #:first-bound
 	   #:*db* #:clear-db #:save-db #:load-db #:make-db
 	   #:binding-p #:collect-bindings))
 
@@ -242,6 +242,15 @@
 (defmacro bound-p (bindings-spec)
   `(with ,bindings-spec
      (return t)))
+
+(defmacro first-bound (bindings-spec)
+  (let ((binding (car (collect-bindings bindings-spec))))
+    (assert binding ()
+	    "Invalid BINDING-SPEC: ~S
+You should provide exactly one unbound variable."
+	    bindings-spec)
+    `(with ,bindings-spec
+       (return ,binding))))
 
 ;;  ADD
 
