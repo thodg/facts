@@ -9,7 +9,7 @@
 (defpackage :lowh-facts
   (:nicknames :facts)
   (:use :cl :lessp)
-  (:export #:anon #:add #:rm #:with #:when-bound
+  (:export #:anon #:add #:rm #:with #:bound-p
 	   #:*db* #:clear-db #:save-db #:load-db #:make-db
 	   #:binding-p #:collect-bindings))
 
@@ -239,7 +239,7 @@
      (with/rec () ,bindings-spec
        ,@body)))
 
-(defmacro when-bound (bindings-spec)
+(defmacro bound-p (bindings-spec)
   `(with ,bindings-spec
      (return t)))
 
