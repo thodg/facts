@@ -9,7 +9,9 @@
 (defpackage :lowh-facts
   (:nicknames :facts)
   (:use :cl :lessp)
-  (:export #:anon #:add #:rm #:with #:bound-p #:first-bound
+  (:export #:anon
+	   #:with #:bound-p #:collect #:first-bound #:let-with
+	   #:add #:rm
 	   #:*db* #:clear-db #:save-db #:load-db #:make-db
 	   #:binding-p #:collect-bindings))
 
@@ -139,10 +141,10 @@
   (let ((g!facts (gensym "FACTS-")))
     `(let (,g!facts)
        (with ,facts-spec
-	     ,@(mapcar (lambda (fact)
-			 `(pushnew (make-fact/v ,@fact) ,g!facts
-				   :test #'fact-equal))
-		       facts-spec))
+	 ,@(mapcar (lambda (fact)
+		     `(pushnew (make-fact/v ,@fact) ,g!facts
+			       :test #'fact-equal))
+		   facts-spec))
        (mapcar #'db-delete ,g!facts))))
 
 ;;  Bindings
@@ -239,9 +241,18 @@
      (with/rec () ,bindings-spec
        ,@body)))
 
+;;  WITH sugar, please
+
 (defmacro bound-p (bindings-spec)
   `(with ,bindings-spec
      (return t)))
+
+(defmacro collect (binding-spec &body body)
+  (let ((g!collect (gensym "COLLECT-")))
+    `(let ((,g!collect ()))
+       (with ,binding-spec
+	 (push (progn ,@body) ,g!collect))
+       ,g!collect)))
 
 (defmacro first-bound (bindings-spec)
   (let ((binding (car (collect-bindings bindings-spec))))
@@ -251,6 +262,15 @@ You should provide exactly one unbound variable."
 	    bindings-spec)
     `(with ,bindings-spec
        (return ,binding))))
+
+(defmacro let-with (let-spec &body body)
+  `(let* (,@(mapcar
+	     (lambda (b)
+	       (if (third b)
+		   `(,(first b) (or (first-bound ,(second b)) ,(third b)))
+		   `(,(first b) (first-bound ,(second b)))))
+	     let-spec))
+     ,@body))
 
 ;;  ADD
 
