@@ -137,15 +137,17 @@
       (llrbtree:tree-delete fact (db-osp-tree db))
       fact)))
 
-(defmacro rm (facts-spec)
+(defmacro collect-facts (facts-spec)
   (let ((g!facts (gensym "FACTS-")))
     `(let (,g!facts)
        (with ,facts-spec
 	 ,@(mapcar (lambda (fact)
-		     `(pushnew (make-fact/v ,@fact) ,g!facts
-			       :test #'fact-equal))
+		     `(push (make-fact/v ,@fact) ,g!facts))
 		   facts-spec))
-       (mapcar #'db-delete ,g!facts))))
+       (remove-duplicates ,g!facts :test #'fact-equal))))
+
+(defmacro rm (facts-spec)
+  `(mapc #'db-delete (collect-facts ,facts-spec)))
 
 ;;  Bindings
 
