@@ -17,6 +17,12 @@
 
 (in-package :lowh-facts)
 
+;;  Tools
+
+(defun nor (&rest forms)
+  (declare (dynamic-extent forms))
+  (every #'null forms))
+
 ;;  Anonymous value
 
 (defpackage :lowh-facts.anon
@@ -137,6 +143,19 @@
       (llrbtree:tree-delete fact (db-osp-tree db))
       fact)))
 
+(defmacro db-map ((var-s var-p var-o) (tree &key start end) &body body)
+  (let ((g!fact (gensym "FACT-"))
+	(g!value (gensym "VALUE-")))
+    `(llrbtree:map-tree (lambda (,g!fact ,g!value)
+			  (declare (ignore ,g!value))
+			  (let ((,var-s (fact/v-subject   ,g!fact))
+				(,var-p (fact/v-predicate ,g!fact))
+				(,var-o (fact/v-object    ,g!fact)))
+			    ,@body))
+			(,tree *db*)
+			,@(when start `(:start ,start))
+			,@(when end   `(:end ,end)))))
+
 (defmacro collect-facts (facts-spec)
   (let ((g!facts (gensym "FACTS-")))
     `(let (,g!facts)
@@ -166,6 +185,13 @@
 					      bindings)))
     (t bindings)))
 
+(defun gensym-bindings (bindings)
+  (mapcar (lambda (b)
+	    (cons b (gensym (concatenate 'string
+					 (string-upcase (subseq (string b) 1))
+					 "-"))))
+	  bindings))
+
 (defun binding-bound (sym env)
   (when (binding-p sym)
     (find sym env)))
@@ -176,71 +202,62 @@
 
 ;;  WITH
 
-(defun with/body (env bindings body)
-  (if bindings `((with/rec ,env ,bindings ,@body)) body))
+(defun with/3 (form-s form-p form-o body)
+  ;; TODO: compiler macro
+  ;;       ,(make-fact/v form-s form-p form-o)
+  `(when (db-get (make-fact/v ,form-s ,form-p ,form-o))
+     ,@body))
 
-(defun with/3 (env s p o bindings body)
-  `(when (db-get (make-fact/v ,s ,p ,o))
-     ,@(with/body env bindings body)))
+(defun with/0 (var-s var-p var-o body)
+  `(db-map (,var-s ,var-p ,var-o) (db-spo-tree)
+     ,@body))
 
-(defun with/0 (env s p o bindings body)
-  (let ((g!fact (gensym "FACT-"))
-	(g!value (gensym "VALUE-"))
-	(env (list* s p o env)))
-    `(llrbtree:map-tree (lambda (,g!fact ,g!value)
-			  (declare (ignore ,g!value))
-			  (let ((,(binding-bound s env) (fact/v-subject ,g!fact))
-				(,(binding-bound p env) (fact/v-predicate ,g!fact))
-				(,(binding-bound o env) (fact/v-object ,g!fact)))
-			    ,@(with/body env bindings body)))
-			(db-spo-tree *db*))))
+(defun with/1-2 (s p o var-s var-p var-o tree body)
+  (let* ((value-s (unless var-s (gensym "VALUE-S-")))
+	 (value-p (unless var-p (gensym "VALUE-P-")))
+	 (value-o (unless var-o (gensym "VALUE-O-")))
+	 (fact-s (or var-s (gensym "FACT-S-")))
+	 (fact-p (or var-p (gensym "FACT-P-")))
+	 (fact-o (or var-o (gensym "FACT-O-")))
+	 (block-name (gensym "BLOCK-")))
+    `(block ,block-name
+       (let (,@(when value-s `((,value-s ,s)))
+	     ,@(when value-p `((,value-p ,p)))
+	     ,@(when value-o `((,value-o ,o))))
+	 (db-map (,fact-s ,fact-p ,fact-o)
+	     (,tree :start (make-fact/v ,value-s ,value-p ,value-o))
+	   (unless (and ,@(unless var-s `((equal ,value-s ,fact-s)))
+			,@(unless var-p `((equal ,value-p ,fact-p)))
+			,@(unless var-o `((equal ,value-o ,fact-o))))
+	     (return-from ,block-name (values)))
+	   ,@body)))))
 
-(defun with/1or2 (env s p o bindings body)
-  (let ((g!block (gensym "BLOCK-"))
-	(g!fact (gensym "FACT-"))
-	(g!value (gensym "VALUE-"))
-	(g!s (unless (binding-unboundp s env) (gensym "S-")))
-	(g!p (unless (binding-unboundp p env) (gensym "P-")))
-	(g!o (unless (binding-unboundp o env) (gensym "O-")))
-	(?s (when (binding-unboundp s env) s))
-	(?p (when (binding-unboundp p env) p))
-	(?o (when (binding-unboundp o env) o))
-	(env (append (when (binding-unboundp s env) `(,s))
-		     (when (binding-unboundp p env) `(,p))
-		     (when (binding-unboundp o env) `(,o))
-		     env)))
-    `(block ,g!block
-       (let (,@(when g!s `((,g!s ,s)))
-	     ,@(when g!p `((,g!p ,p)))
-	     ,@(when g!o `((,g!o ,o))))
-	 (llrbtree:map-tree
-	  (lambda (,g!fact ,g!value)
-	    (declare (ignore ,g!value))
-	    (let (,@(when ?s `((,?s (fact/v-subject ,g!fact))))
-		,@(when ?p `((,?p (fact/v-predicate ,g!fact))))
-		,@(when ?o `((,?o (fact/v-object ,g!fact)))))
-	    (unless (and ,@(when g!s `((equal (fact/v-subject ,g!fact) ,g!s)))
-			 ,@(when g!p `((equal (fact/v-predicate ,g!fact) ,g!p)))
-			 ,@(when g!o `((equal (fact/v-object ,g!fact) ,g!o))))
-	      (return-from ,g!block (values)))
-	    ,@(with/body env bindings body)))
-	(,(cond ((and g!s (or g!p (not g!o))) 'db-spo-tree)
-		(g!p 'db-pos-tree)
-		(t 'db-osp-tree))
-	  *db*)
-	:start (make-fact/v ,g!s ,g!p ,g!o))))))
+(defun with/iter (spec binding-vars body)
+  (destructuring-bind (s p o) spec
+    (let ((var-s (when (binding-p s) (cdr (assoc s binding-vars))))
+	  (var-p (when (binding-p p) (cdr (assoc p binding-vars))))
+	  (var-o (when (binding-p o) (cdr (assoc o binding-vars)))))
+      (cond ((and var-s var-p var-o) (with/0 var-s var-p var-o body))
+	    ((nor var-s var-p var-o) (with/3 s p o body))
+	    (t (with/1-2 s p o var-s var-p var-o
+			 (cond ((and (null var-s) var-o) 'db-spo-tree)
+			       ((null var-p)             'db-pos-tree)
+			       (t                        'db-osp-tree))
+			 body))))))
 
-(defmacro with/rec (env ((s p o) &rest bindings) &body body)
-  (let ((bs (not (binding-unboundp s env)))
-	(bp (not (binding-unboundp p env)))
-	(bo (not (binding-unboundp o env))))
-    (cond ((and bs bp bo)	   (with/3 env s p o bindings body))
-	  ((not (or bs bp bo))	   (with/0 env s p o bindings body))
-	  (t			   (with/1or2 env s p o bindings body)))))
+(defmacro with/rec ((spec &rest more-specs) &body body)
+  (let* ((bindings (collect-bindings spec))
+	 (binding-vars (gensym-bindings bindings))
+	 (body-subst (sublis binding-vars body)))
+    (with/iter spec binding-vars
+	       (if more-specs
+		   `((with/rec ,(sublis binding-vars more-specs)
+		       ,@body-subst))
+		   body-subst))))
 
 (defmacro with (bindings-spec &body body)
   `(block nil
-     (with/rec () ,bindings-spec
+     (with/rec ,bindings-spec
        ,@body)))
 
 ;;  WITH sugar, please
