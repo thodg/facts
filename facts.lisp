@@ -156,18 +156,6 @@
 			,@(when start `(:start ,start))
 			,@(when end   `(:end ,end)))))
 
-(defmacro collect-facts (facts-spec)
-  (let ((g!facts (gensym "FACTS-")))
-    `(let (,g!facts)
-       (with ,facts-spec
-	 ,@(mapcar (lambda (fact)
-		     `(push (make-fact/v ,@fact) ,g!facts))
-		   facts-spec))
-       (remove-duplicates ,g!facts :test #'fact-equal))))
-
-(defmacro rm (facts-spec)
-  `(mapc #'db-delete (collect-facts ,facts-spec)))
-
 ;;  Bindings
 
 (defun binding-p (sym)
@@ -273,6 +261,15 @@
 	 (push (progn ,@body) ,g!collect))
        ,g!collect)))
 
+(defmacro collect-facts (facts-spec)
+  (let ((g!facts (gensym "FACTS-")))
+    `(let (,g!facts)
+       (with ,facts-spec
+	 ,@(mapcar (lambda (fact)
+		     `(push (make-fact/v ,@fact) ,g!facts))
+		   facts-spec))
+       (remove-duplicates ,g!facts :test #'fact-equal))))
+
 (defmacro first-bound (bindings-spec)
   (let ((binding (car (collect-bindings bindings-spec))))
     (assert binding ()
@@ -301,3 +298,8 @@ You should provide exactly one unbound variable."
        ,@(mapcar (lambda (fact)
 		   `(db-insert ,@fact))
 		 facts-definition))))
+
+;;  RM
+
+(defmacro rm (facts-spec)
+  `(mapc #'db-delete (collect-facts ,facts-spec)))
