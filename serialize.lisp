@@ -29,10 +29,7 @@
 	    (format into ")~%")
 	    (force-output into))))
 
-(defun load-db (src &optional (clear t))
-  (when clear
-    (facts:clear-db))
-
+(defun load-db (src)
   (etypecase src
     (string (with-input-from-string (stream src) (load-db stream)))
     (pathname (with-open-file (stream src
