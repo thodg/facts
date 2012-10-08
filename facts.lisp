@@ -94,16 +94,16 @@
 		    (lessp a3 b3))))))
 
 (defun fact-spo-lessp (a b)
-  (lessp/3 (elt a 0) (elt a 1) (elt a 2)
-	   (elt b 0) (elt b 1) (elt b 2)))
+  (lessp/3 (fact-subject a) (fact-predicate a) (fact-object a)
+           (fact-subject b) (fact-predicate b) (fact-object b)))
 
 (defun fact-pos-lessp (a b)
-  (lessp/3 (elt a 1) (elt a 2) (elt a 0)
-	   (elt b 1) (elt b 2) (elt b 0)))
+  (lessp/3 (fact-predicate a) (fact-object a) (fact-subject a)
+           (fact-predicate b) (fact-object b) (fact-subject b)))
 
 (defun fact-osp-lessp (a b)
-  (lessp/3 (elt a 2) (elt a 0) (elt a 1)
-	   (elt b 2) (elt b 0) (elt b 1)))
+  (lessp/3 (fact-object a) (fact-subject a) (fact-predicate a)
+           (fact-object b) (fact-subject b) (fact-predicate b)))
 
 ;;  Database
 
@@ -188,6 +188,21 @@
   (and (binding-p sym)
        (not (find sym env))))
 
+(defun expand-spec (spec)
+  (destructuring-bind (s p o &rest more-p-o) spec
+    (labels ((expand/po (p-o-list result)
+	       (if (endp p-o-list)
+		   result
+		   (destructuring-bind (p o &rest list) p-o-list
+		     (expand/po list (cons `(,s ,p ,o)
+					   result))))))
+      (nreverse (expand/po more-p-o
+			   (cons `(,s ,p ,o)
+				 nil))))))
+
+(defun expand-specs (specs)
+  (mapcan #'expand-spec specs))
+
 ;;  WITH
 
 (defun with/3 (form-s form-p form-o body)
@@ -243,40 +258,46 @@
 		       ,@body-subst))
 		   body-subst))))
 
-(defmacro with (bindings-spec &body body)
+(defmacro with/expanded (binding-specs &body body)
   `(block nil
-     (with/rec ,bindings-spec
+     (with/rec ,binding-specs
        ,@body)))
+
+(defmacro with (binding-specs &body body)
+  `(with/expanded ,(expand-specs binding-specs)
+     ,@body))
 
 ;;  WITH sugar, please
 
-(defmacro bound-p (bindings-spec)
-  `(with ,bindings-spec
+(defmacro bound-p (binding-specs)
+  `(with ,binding-specs
      (return t)))
 
-(defmacro collect (binding-spec &body body)
+(defmacro collect (binding-specs &body body)
   (let ((g!collect (gensym "COLLECT-")))
     `(let ((,g!collect ()))
-       (with ,binding-spec
+       (with ,binding-specs
 	 (push (progn ,@body) ,g!collect))
        ,g!collect)))
 
-(defmacro collect-facts (facts-spec)
-  (let ((g!facts (gensym "FACTS-")))
+(defmacro collect-facts (fact-specs)
+  (let ((g!facts (gensym "FACTS-"))
+	(specs (expand-specs fact-specs)))
     `(let (,g!facts)
-       (with ,facts-spec
+       (with/expanded ,specs
 	 ,@(mapcar (lambda (fact)
 		     `(push (make-fact/v ,@fact) ,g!facts))
-		   facts-spec))
+		   specs))
        (remove-duplicates ,g!facts :test #'fact-equal))))
 
-(defmacro first-bound (bindings-spec)
-  (let ((binding (car (collect-bindings bindings-spec))))
+(defmacro first-bound (binding-specs)
+  ;; FIXME: detect multiple bindings
+  (let ((binding (car (collect-bindings binding-specs))))
     (assert binding ()
 	    "Invalid BINDING-SPEC: ~S
 You should provide exactly one unbound variable."
-	    bindings-spec)
-    `(with ,bindings-spec
+	    binding-specs)
+    `(with ,binding-specs
        (return ,binding))))
 
 (defmacro let-with (let-spec &body body)
@@ -290,16 +311,17 @@ You should provide exactly one unbound variable."
 
 ;;  ADD
 
-(defmacro add (&rest facts-definition)
-  (let ((bindings (collect-bindings facts-definition)))
+(defmacro add (&rest fact-specs)
+  ;; FIXME: expand bindings at macro expansion time
+  (let ((bindings (collect-bindings fact-specs)))
     `(let ,(mapcar (lambda (b)
 		     `(,b (anon ,(subseq (symbol-name b) 1))))
 		   bindings)
        ,@(mapcar (lambda (fact)
 		   `(db-insert ,@fact))
-		 facts-definition))))
+		 (expand-specs fact-specs)))))
 
 ;;  RM
 
-(defmacro rm (facts-spec)
-  `(mapc #'db-delete (collect-facts ,facts-spec)))
+(defmacro rm (fact-specs)
+  `(mapc #'db-delete (collect-facts ,fact-specs)))
