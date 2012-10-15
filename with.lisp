@@ -132,16 +132,18 @@ You should provide exactly one unbound variable."
 
 ;;  ADD
 
-(defmacro add (&rest fact-specs)
-  (let ((bindings (collect-bindings fact-specs)))
-    `(let ,(mapcar (lambda (b)
-                    `(,b (anon ,(subseq (symbol-name b) 1))))
-                  bindings)
-       ,@(mapcar (lambda (fact)
-                  `(db-insert ,@fact))
-                (expand-specs fact-specs)))))
+(defmacro add (&rest specs)
+  (let ((bindings (collect-bindings specs)))
+    `(with-transaction
+       (let ,(mapcar (lambda (b)
+		       `(,b (anon ,(subseq (symbol-name b) 1))))
+		     bindings)
+	 ,@(mapcar (lambda (fact)
+		     `(db-insert ,@fact))
+		   (expand-specs specs))))))
 
 ;;  RM
 
-(defmacro rm (fact-specs)
-  `(mapc #'db-delete (collect-facts ,fact-specs)))
+(defmacro rm (specs)
+  `(with-transaction
+     (mapc #'db-delete (collect-facts ,specs))))

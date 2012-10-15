@@ -23,4 +23,5 @@
 	   #:with #:bound-p #:collect #:first-bound #:let-with
 	   #:add #:rm
 	   #:*db* #:clear-db #:save-db #:load-db #:make-db
+	   #:with-transaction
 	   #:binding-p #:collect-bindings))

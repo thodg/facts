@@ -34,7 +34,7 @@
 	   (transaction-log *transaction*))))
 
 (defun commit-transaction (tx)
-  ;; FIXME: log transaction to disk ?
+  ;; FIXME: log transaction to disk
   (setf (transaction-completed tx) t))
 
 (defun rollback-transaction (tx)
@@ -47,6 +47,6 @@
        (progn ,@body)
        (let ((*transaction* (make-transaction)))
 	 (unwind-protect (prog1 (progn ,@body)
-			   (transaction-commit *transaction*))
+			   (commit-transaction *transaction*))
 	   (unless (transaction-completed *transaction*)
 	     (rollback-transaction *transaction*))))))
