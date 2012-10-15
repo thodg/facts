@@ -47,12 +47,11 @@
 
 (defun index-insert (index fact)
   (declare (type fact/v fact))
-  (setf (llrbtree:tree-get fact index) fact)
-  (define-rollback index-insert
-    (index-delete index fact)))
+  (setf (llrbtree:tree-get fact index) fact))
 
 (defun index-delete (index fact)
   (declare (type fact/v fact))
-  (llrbtree:tree-delete fact index)
-  (define-rollback index-delete
-    (index-insert index fact)))
+  (llrbtree:tree-delete fact index))
+
+(setf (rollback-function 'index-insert) 'index-delete)
+(setf (rollback-function 'index-delete) 'index-insert)
