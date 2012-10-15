@@ -56,7 +56,7 @@
     (do-symbols (sym pkg)
       (unintern sym pkg))))
 
-(defun clear ()
+(defun clear-db ()
   (setf *db* (make-db))
   (clear-package :lowh-facts.anon))
 
