@@ -81,7 +81,8 @@
 			  (let ((,var-s (fact/v-subject   ,g!fact))
 				(,var-p (fact/v-predicate ,g!fact))
 				(,var-o (fact/v-object    ,g!fact)))
-			    ,@body))
+			    ,@body
+			    (values)))
 			(,tree *db*)
 			,@(when start `(:start ,start))
 			,@(when end   `(:end ,end)))))

@@ -30,7 +30,8 @@
   ;; TODO: compiler macro
   ;;       ,(make-fact/v form-s form-p form-o)
   `(when (db-get ,form-s ,form-p ,form-o)
-     ,@body))
+     ,@body
+     (values)))
 
 (defun with/0 (var-s var-p var-o body)
   `(db-map (,var-s ,var-p ,var-o) (db-index-spo)
