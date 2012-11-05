@@ -21,33 +21,39 @@
 ;;  Database
 
 (defstruct db
-  (index-spo (llrbtree:make-tree :lessp #'fact-spo-lessp))
-  (index-pos (llrbtree:make-tree :lessp #'fact-pos-lessp))
-  (index-osp (llrbtree:make-tree :lessp #'fact-osp-lessp)))
+  (index-spo (make-index #'fact-spo-lessp))
+  (index-pos (make-index #'fact-pos-lessp))
+  (index-osp (make-index #'fact-osp-lessp)))
 
 (defun db-fact (db fact)
   (index-get (db-index-spo db) fact))
 
 ;;  Database operations on indexes
 
+(eval-when (:compile-toplevel)
+  (setf (rollback-function 'db-indexes-insert) 'db-indexes-delete)
+  (setf (rollback-function 'db-indexes-delete) 'db-indexes-insert))
+
 (defun db-indexes-insert (db fact)
   (with-rollback*
     (index-insert (db-index-spo db) fact)
     (index-insert (db-index-pos db) fact)
-    (index-insert (db-index-osp db) fact)))
+    (index-insert (db-index-osp db) fact)
+    (log-transaction-operation db-indexes-insert db fact)))
 
 (defun db-indexes-delete (db fact)
   (with-rollback*
     (index-delete (db-index-spo db) fact)
     (index-delete (db-index-pos db) fact)
-    (index-delete (db-index-osp db) fact)))
-
-(setf (rollback-function 'db-indexes-insert) 'db-indexes-delete)
-(setf (rollback-function 'db-indexes-delete) 'db-indexes-insert)
+    (index-delete (db-index-osp db) fact)
+    (log-transaction-operation db-indexes-delete db fact)))
 
 ;;  High level database operations
 
 (defvar *db* (make-db))
+
+(setf *transaction-vars* nil)
+(transaction-var *db* '*db*)
 
 (defun clear-package (package)
   (let ((pkg (typecase package
@@ -58,6 +64,8 @@
 
 (defun clear-db ()
   (setf *db* (make-db))
+  (setf *transaction-vars* nil)
+  (transaction-var *db* '*db*)
   (clear-package :lowh-facts.anon))
 
 (defun db-get (s p o &optional (db *db*))
@@ -73,16 +81,15 @@
     (when fact
       (db-indexes-delete db fact))))
 
-(defmacro db-map ((var-s var-p var-o) (tree &key start end) &body body)
+(defmacro db-each ((var-s var-p var-o) (tree &key start end) &body body)
   (let ((g!fact (gensym "FACT-"))
 	(g!value (gensym "VALUE-")))
-    `(llrbtree:map-tree (lambda (,g!fact ,g!value)
-			  (declare (ignore ,g!value))
-			  (let ((,var-s (fact/v-subject   ,g!fact))
-				(,var-p (fact/v-predicate ,g!fact))
-				(,var-o (fact/v-object    ,g!fact)))
-			    ,@body
-			    (values)))
-			(,tree *db*)
-			,@(when start `(:start ,start))
-			,@(when end   `(:end ,end)))))
+    `(index-each (,tree *db*)
+		 (lambda (,g!fact)
+		   (let ((,var-s (fact/v-subject   ,g!fact))
+			 (,var-p (fact/v-predicate ,g!fact))
+			 (,var-o (fact/v-object    ,g!fact)))
+		     ,@body
+		     (values)))
+		 ,@(when start `(:start ,start))
+		 ,@(when end   `(:end ,end)))))

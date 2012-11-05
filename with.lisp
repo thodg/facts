@@ -34,7 +34,7 @@
      (values)))
 
 (defun with/0 (var-s var-p var-o body)
-  `(db-map (,var-s ,var-p ,var-o) (db-index-spo)
+  `(db-each (,var-s ,var-p ,var-o) (db-index-spo)
      ,@body))
 
 (defun with/1-2 (s p o var-s var-p var-o tree body)
@@ -49,7 +49,7 @@
        (let (,@(when value-s `((,value-s ,s)))
 	     ,@(when value-p `((,value-p ,p)))
 	     ,@(when value-o `((,value-o ,o))))
-	 (db-map (,fact-s ,fact-p ,fact-o)
+	 (db-each (,fact-s ,fact-p ,fact-o)
 	     (,tree :start (make-fact/v ,value-s ,value-p ,value-o))
 	   (unless (and ,@(unless var-s `((equal ,value-s ,fact-s)))
 			,@(unless var-p `((equal ,value-p ,fact-p)))
@@ -114,13 +114,13 @@
 
 (defmacro first-bound (binding-specs)
   ;; FIXME: detect multiple bindings
-  (let ((binding (car (collect-bindings binding-specs))))
-    (assert binding ()
+  (let* ((bindings (collect-bindings binding-specs)))
+    (assert (= 1 (length bindings)) ()
 	    "Invalid BINDING-SPEC: ~S
 You should provide exactly one unbound variable."
 	    binding-specs)
     `(with ,binding-specs
-       (return ,binding))))
+       (return ,(first bindings)))))
 
 (defmacro let-with (let-spec &body body)
   `(let* (,@(mapcar

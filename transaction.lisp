@@ -21,6 +21,15 @@
 ;;  Transactions
 
 (defvar *transaction* nil)
+(defvar *db-path* nil)
+(defvar *transaction-vars* nil)
+(defvar *transaction-mutex* (sb-thread:make-mutex :name "transaction-mutex"))
+
+(defun transaction-var (value name)
+  (pushnew (cons value name) *transaction-vars* :key #'car :test #'eq))
+
+(defun transaction-vars ()
+  *transaction-vars*)
 
 (defstruct transaction
   (completed nil :type (member nil t))
@@ -28,25 +37,47 @@
 
 (defmacro log-transaction-operation (op &rest args)
   (unless (rollback-function op)
-    (error "Undefined rollback function for ~S" op))
+    (warn "Undefined rollback function for ~S" op))
   `(when *transaction*
      (push (list ',op ,@args)
 	   (transaction-log *transaction*))))
 
 (defun commit-transaction (tx)
-  ;; FIXME: log transaction to disk
+  (when *db-path*
+    (ensure-directories-exist *db-path*)
+    (with-open-file (out (make-pathname :name "facts-log" :type "lisp"
+					:defaults *db-path*)
+			 :direction :output
+			 :if-exists :append
+			 :if-does-not-exist :create)
+      (dolist (operation (reverse (transaction-log tx)))
+	(write (sublis (transaction-vars) operation)
+	       :stream out :readably t)
+	(fresh-line out))))
   (setf (transaction-completed tx) t))
 
 (defun rollback-transaction (tx)
   (dolist (operation (transaction-log tx))
-    (destructuring-bind (op &rest args) operation
-      (rollback op args))))
+    (apply #'rollback operation)))
+
+(defmacro with-mutex ((mutex timeout) &body body)
+  (let ((g!mutex (gensym "MUTEX-"))
+	(g!result (gensym "RESULT-")))
+    `(let ((,g!mutex ,mutex)
+	   ,g!result)
+       (if (sb-thread:with-mutex (,g!mutex :wait-p t :timeout ,timeout)
+	     (setf ,g!result (progn ,@body))
+	     t)
+	   ,g!result
+	   (error "Could not acquire ~S for ~D seconds."
+		  ,g!mutex ,timeout)))))
 
 (defmacro with-transaction (&body body)
   `(if *transaction*
        (progn ,@body)
-       (let ((*transaction* (make-transaction)))
-	 (unwind-protect (prog1 (progn ,@body)
-			   (commit-transaction *transaction*))
-	   (unless (transaction-completed *transaction*)
-	     (rollback-transaction *transaction*))))))
+       (with-mutex (*transaction-mutex* 1)
+	 (let ((*transaction* (make-transaction)))
+	   (unwind-protect (prog1 (progn ,@body)
+			     (commit-transaction *transaction*))
+	     (unless (transaction-completed *transaction*)
+	       (rollback-transaction *transaction*)))))))

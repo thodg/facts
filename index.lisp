@@ -28,18 +28,52 @@
 		    (lessp a3 b3))))))
 
 (defun fact-spo-lessp (a b)
-  (lessp/3 (fact-subject a) (fact-predicate a) (fact-object a)
-           (fact-subject b) (fact-predicate b) (fact-object b)))
+  (or (null a)
+      (and b
+	   (lessp/3 (fact-subject a) (fact-predicate a) (fact-object a)
+		    (fact-subject b) (fact-predicate b) (fact-object b)))))
 
 (defun fact-pos-lessp (a b)
-  (lessp/3 (fact-predicate a) (fact-object a) (fact-subject a)
-           (fact-predicate b) (fact-object b) (fact-subject b)))
+  (or (null a)
+      (and b
+	   (lessp/3 (fact-predicate a) (fact-object a) (fact-subject a)
+		    (fact-predicate b) (fact-object b) (fact-subject b)))))
 
 (defun fact-osp-lessp (a b)
-  (lessp/3 (fact-object a) (fact-subject a) (fact-predicate a)
-           (fact-object b) (fact-subject b) (fact-predicate b)))
+  (or (null a)
+      (and b
+	   (lessp/3 (fact-object a) (fact-subject a) (fact-predicate a)
+		    (fact-object b) (fact-subject b) (fact-predicate b)))))
 
 ;;  Index operations
+
+;;    skip lists
+
+(defun make-index (lessp)
+  (make-usl :lessp lessp))
+
+(defun index-get (index fact)
+  (declare (type fact/v fact))
+  (usl-find index fact))
+
+(defun index-insert (index fact)
+  (declare (type fact/v fact))
+  (usl-insert index fact))
+
+(defun index-delete (index fact)
+  (declare (type fact/v fact))
+  (usl-delete index fact))
+
+(defun index-each (index fn &key start end)
+  (usl-each index fn :start start :end end))
+
+#+nil(
+
+;;    LLRBTREE
+
+(defun make-index (lessp equal)
+  (declare (type (function (t t) (or t nil)) lessp equal))
+  (llrbtree:make-tree :lessp lessp))
 
 (defun index-get (index fact)
   (declare (type fact/v fact))
@@ -52,6 +86,22 @@
 (defun index-delete (index fact)
   (declare (type fact/v fact))
   (llrbtree:tree-delete fact index))
+
+  (defmacro index-map ((var-s var-p var-o) (index &key start end) &body body)
+  (let ((g!fact (gensym "FACT-"))
+	(g!value (gensym "VALUE-")))
+    `(llrbtree:map-tree (lambda (,g!fact ,g!value)
+			  (declare (ignore ,g!value))
+			  (let ((,var-s (fact/v-subject   ,g!fact))
+				(,var-p (fact/v-predicate ,g!fact))
+				(,var-o (fact/v-object    ,g!fact)))
+			    ,@body
+			    (values)))
+			,index
+			,@(when start `(:start ,start))
+			,@(when end   `(:end ,end)))))
+
+)
 
 (setf (rollback-function 'index-insert) 'index-delete)
 (setf (rollback-function 'index-delete) 'index-insert)

@@ -26,13 +26,14 @@
   :author "Thomas de Grivel <billitch@gmail.com>"
   :version "0.2"
   :description "facts database"
-  :depends-on ("lessp" "rollback" "com.informatimago.common-lisp.llrbtree")
+  :depends-on ("lessp" "rollback")
   :components
   ((:file "package")
    (:file "fact" :depends-on ("package"))
    (:file "spec" :depends-on ("package"))
    (:file "transaction" :depends-on ("package"))
-   (:file "index" :depends-on ("fact"))
-   (:file "database" :depends-on ("index"))
+   (:file "usl" :depends-on ("fact"))
+   (:file "index" :depends-on ("usl"))
+   (:file "database" :depends-on ("index" "transaction"))
    (:file "with" :depends-on ("database" "spec"))
    (:file "serialize" :depends-on ("with"))))

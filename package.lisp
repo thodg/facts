@@ -16,12 +16,14 @@
 ;;  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ;;
 
+(in-package :cl-user)
+
 (defpackage :lowh-facts
   (:nicknames :facts)
   (:use :cl :lessp :rollback)
   (:export #:anon
 	   #:with #:bound-p #:collect #:first-bound #:let-with
 	   #:add #:rm
-	   #:*db* #:clear-db #:save-db #:load-db #:make-db
+	   #:*db* #:*db-path* #:clear-db #:save-db #:load-db #:make-db
 	   #:with-transaction
 	   #:binding-p #:collect-bindings))
