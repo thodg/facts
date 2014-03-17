@@ -65,7 +65,7 @@
 	(g!result (gensym "RESULT-")))
     `(let ((,g!mutex ,mutex)
 	   ,g!result)
-       (if (sb-thread:with-mutex (,g!mutex :wait-p t :timeout ,timeout)
+       (if (sb-thread:with-mutex (,g!mutex :wait-p t)
 	     (setf ,g!result (progn ,@body))
 	     t)
 	   ,g!result

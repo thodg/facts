@@ -58,25 +58,3 @@
 
 (defun expand-specs (specs)
   (mapcan #'expand-spec specs))
-
-;;  Anonymous values
-
-(defpackage :lowh-facts.anon
-  (:nicknames :facts.anon))
-
-(defun anon (&rest name-hints)
-  (let* ((name (string-upcase (format nil "~{~A~^-~}" name-hints)))
-	 (anon-pkg (find-package :lowh-facts.anon))
-	 (sym (find-symbol name anon-pkg))
-	 (count (when sym
-		  (setf (get sym 'anon-counter)
-			(1+ (or (get sym 'anon-counter) 0))))))
-    (if count
-	(intern (format nil "~A-~4,'0X" name count) anon-pkg)
-	(intern name anon-pkg))))
-
-(defmacro with-anon ((&rest vars) &body body)
-  `(let ,(mapcar (lambda (var)
-		   `(,var (anon (symbol-name ,var))))
-		 vars)
-     ,@body))

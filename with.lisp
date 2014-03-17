@@ -37,6 +37,14 @@
   `(db-each (,var-s ,var-p ,var-o) (db-index-spo)
      ,@body))
 
+(defun ignorable-bindings (&rest vars)
+  (let ((ignorable (mapcan (lambda (x)
+			     (when (char= #\- (char (symbol-name x) 0))
+			       (list x)))
+			   vars)))
+    (when ignorable
+      `((declare (ignorable ,@ignorable))))))
+
 (defun with/1-2 (s p o var-s var-p var-o tree body)
   (let* ((value-s (unless var-s (gensym "VALUE-S-")))
 	 (value-p (unless var-p (gensym "VALUE-P-")))
@@ -51,24 +59,27 @@
 	     ,@(when value-o `((,value-o ,o))))
 	 (db-each (,fact-s ,fact-p ,fact-o)
 	     (,tree :start (make-fact/v ,value-s ,value-p ,value-o))
+	   ,@(ignorable-bindings fact-s fact-p fact-o)
 	   (unless (and ,@(unless var-s `((equal ,value-s ,fact-s)))
 			,@(unless var-p `((equal ,value-p ,fact-p)))
 			,@(unless var-o `((equal ,value-o ,fact-o))))
 	     (return-from ,block-name (values)))
 	   ,@body)))))
 
-(defun with/iter (spec binding-vars body)
-  (destructuring-bind (s p o) spec
-    (let ((var-s (when (binding-p s) (cdr (assoc s binding-vars))))
-	  (var-p (when (binding-p p) (cdr (assoc p binding-vars))))
-	  (var-o (when (binding-p o) (cdr (assoc o binding-vars)))))
-      (cond ((and var-s var-p var-o) (with/0 var-s var-p var-o body))
-	    ((nor var-s var-p var-o) (with/3 s p o body))
-	    (t (with/1-2 s p o var-s var-p var-o
-			 (cond ((and (null var-s) var-o) 'db-index-spo)
-			       ((null var-p)             'db-index-pos)
-			       (t                        'db-index-osp))
-			 body))))))
+(eval-when (:compile-toplevel :load-toplevel)
+
+  (defun with/iter (spec binding-vars body)
+    (destructuring-bind (s p o) spec
+      (let ((var-s (when (binding-p s) (cdr (assoc s binding-vars))))
+	    (var-p (when (binding-p p) (cdr (assoc p binding-vars))))
+	    (var-o (when (binding-p o) (cdr (assoc o binding-vars)))))
+	(cond ((and var-s var-p var-o) (with/0 var-s var-p var-o body))
+	      ((nor var-s var-p var-o) (with/3 s p o body))
+	      (t (with/1-2 s p o var-s var-p var-o
+			   (cond ((and (null var-s) var-o) 'db-index-spo)
+				 ((null var-p)             'db-index-pos)
+				 (t                        'db-index-osp))
+			   body)))))))
 
 (defmacro with/rec ((spec &rest more-specs) &body body)
   (let* ((bindings (collect-bindings spec))
@@ -93,7 +104,7 @@
 
 (defmacro bound-p (binding-specs)
   `(with ,binding-specs
-     (return t)))
+     (return (values t ,@(collect-bindings binding-specs)))))
 
 (defmacro collect (binding-specs &body body)
   (let ((g!collect (gensym "COLLECT-")))
@@ -130,6 +141,12 @@ You should provide exactly one unbound variable."
 		   `(,(first b) (first-bound ,(second b)))))
 	     let-spec))
      ,@body))
+
+(defmacro push-tail (tail &rest values)
+  `(setf ,@(mapcan (lambda (v)
+		     `((cdr ,tail) (cons ,v nil)
+		       ,tail (cdr ,tail)))
+		   values)))
 
 ;;  ADD
 

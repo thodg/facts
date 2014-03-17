@@ -16,26 +16,20 @@
 ;;  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ;;
 
-(defpackage :lowh-facts.system
-  (:use :cl :asdf))
+(in-package :lowh-facts)
 
-(in-package :lowh-facts.system)
+;;  Inspect database
 
-(defsystem :lowh-facts
-  :name "lowh-fact"
-  :author "Thomas de Grivel <billitch@gmail.com>"
-  :version "0.2"
-  :description "facts database"
-  :depends-on ("lessp" "rollback")
-  :components
-  ((:file "package")
-   (:file "fact" :depends-on ("package"))
-   (:file "spec" :depends-on ("package"))
-   (:file "anon" :depends-on ("package"))
-   (:file "transaction" :depends-on ("package"))
-   (:file "usl" :depends-on ("fact"))
-   (:file "index" :depends-on ("usl"))
-   (:file "database" :depends-on ("index" "transaction"))
-   (:file "with" :depends-on ("database" "spec" "anon"))
-   (:file "serialize" :depends-on ("with"))
-   (:file "meta" :depends-on ("with"))))
+(defun about (x)
+  (let ((i (the fixnum 0)))
+    (with ((x ?p ?o))
+      (when (= 0 i)
+	(incf i)
+	(format t "~&(~S" x))
+      (format t "~%  ~S ~S" ?p ?o))
+    (unless (= 0 i)
+      (format t ")~%")))
+  (with ((?s x ?o))
+    (format t "(~S ~A ~S)~%" ?s x ?o))
+  (with ((?s ?p x))
+    (format t "(~S ~S ~A)~%" ?s ?p x)))

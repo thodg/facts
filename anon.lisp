@@ -16,26 +16,28 @@
 ;;  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ;;
 
-(defpackage :lowh-facts.system
-  (:use :cl :asdf))
+(in-package :lowh-facts)
 
-(in-package :lowh-facts.system)
+;;  Anonymous values
 
-(defsystem :lowh-facts
-  :name "lowh-fact"
-  :author "Thomas de Grivel <billitch@gmail.com>"
-  :version "0.2"
-  :description "facts database"
-  :depends-on ("lessp" "rollback")
-  :components
-  ((:file "package")
-   (:file "fact" :depends-on ("package"))
-   (:file "spec" :depends-on ("package"))
-   (:file "anon" :depends-on ("package"))
-   (:file "transaction" :depends-on ("package"))
-   (:file "usl" :depends-on ("fact"))
-   (:file "index" :depends-on ("usl"))
-   (:file "database" :depends-on ("index" "transaction"))
-   (:file "with" :depends-on ("database" "spec" "anon"))
-   (:file "serialize" :depends-on ("with"))
-   (:file "meta" :depends-on ("with"))))
+(defpackage :lowh-facts.anon
+  (:nicknames :facts.anon))
+
+(defun anon (&rest name-hints)
+  (let* ((name (string-upcase (format nil "~{~A~^-~}" name-hints)))
+	 (sym (intern name :facts.anon)))
+    (labels ((try (count)
+	       (multiple-value-bind (s found) (intern (format nil "~A-~4,'0X"
+							      name count)
+						      :facts.anon)
+		 (if found
+		     (try (1+ count))
+		     (prog1 s
+		       (setf (get sym 'anon-counter) count))))))
+      (try (or (get sym 'anon-counter) 0)))))
+
+(defmacro with-anon ((&rest vars) &body body)
+  `(let ,(mapcar (lambda (var)
+		   `(,var (anon ,(symbol-name var))))
+		 vars)
+     ,@body))

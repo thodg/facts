@@ -21,7 +21,7 @@
 (defpackage :lowh-facts
   (:nicknames :facts)
   (:use :cl :lessp :rollback)
-  (:export #:anon
+  (:export #:anon #:with-anon
 	   #:with #:bound-p #:collect #:first-bound #:let-with
 	   #:add #:rm
 	   #:*db* #:*db-path* #:clear-db #:save-db #:load-db #:make-db
