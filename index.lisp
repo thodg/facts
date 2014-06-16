@@ -56,6 +56,10 @@
   (declare (type fact/v fact))
   (usl-find index fact))
 
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (setf (rollback-function 'index-insert) 'index-delete)
+  (setf (rollback-function 'index-delete) 'index-insert))
+
 (defun index-insert (index fact)
   (declare (type fact/v fact))
   (usl-insert index fact))
@@ -102,6 +106,3 @@
 			,@(when end   `(:end ,end)))))
 
 )
-
-(setf (rollback-function 'index-insert) 'index-delete)
-(setf (rollback-function 'index-delete) 'index-insert)
