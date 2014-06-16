@@ -30,7 +30,7 @@
 
 ;;  Database operations on indexes
 
-(eval-when (:compile-toplevel)
+(eval-when (:compile-toplevel :load-toplevel :execute)
   (setf (rollback-function 'db-indexes-insert) 'db-indexes-delete)
   (setf (rollback-function 'db-indexes-delete) 'db-indexes-insert))
 
