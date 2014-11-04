@@ -1,7 +1,7 @@
 ;;
-;;  lowh-facts  -  facts database
+;;  facts - in-memory graph database
 ;;
-;;  Copyright 2011,2012 Thomas de Grivel <billitch@gmail.com>
+;;  Copyright 2011-2014 Thomas de Grivel <thomas@lowh.net>
 ;;
 ;;  Permission to use, copy, modify, and distribute this software for any
 ;;  purpose with or without fee is hereby granted, provided that the above
@@ -16,7 +16,7 @@
 ;;  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ;;
 
-(in-package :lowh-facts)
+(in-package :facts)
 
 ;;  Inspect database
 

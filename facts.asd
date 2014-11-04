@@ -1,7 +1,7 @@
 ;;
-;;  lowh-facts  -  facts database
+;;  facts - in-memory graph database
 ;;
-;;  Copyright 2011,2012 Thomas de Grivel <billitch@gmail.com>
+;;  Copyright 2011-2014 Thomas de Grivel <thomas@lowh.net>
 ;;
 ;;  Permission to use, copy, modify, and distribute this software for any
 ;;  purpose with or without fee is hereby granted, provided that the above
@@ -16,16 +16,16 @@
 ;;  OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 ;;
 
-(defpackage :lowh-facts.system
+(defpackage :facts.system
   (:use :cl :asdf))
 
-(in-package :lowh-facts.system)
+(in-package :facts.system)
 
-(defsystem :lowh-facts
-  :name "lowh-fact"
-  :author "Thomas de Grivel <billitch@gmail.com>"
+(defsystem :facts
+  :name "facts"
+  :author "Thomas de Grivel <thomas@lowh.net>"
   :version "0.2"
-  :description "facts database"
+  :description "in-memory graph database"
   :depends-on ("lessp" "rollback")
   :components
   ((:file "package")
