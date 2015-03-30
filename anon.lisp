@@ -20,7 +20,8 @@
 
 ;;  Anonymous values
 
-(defpackage :facts.anon)
+(defpackage :facts.anon
+  (:nicknames :lowh-facts.anon))
 
 (defun anon (&rest name-hints)
   (let* ((name (string-upcase (format nil "~{~A~^-~}" name-hints)))
