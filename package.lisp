@@ -19,10 +19,12 @@
 (in-package :cl-user)
 
 (defpackage :facts
-  (:use :cl :lessp :rollback)
+  (:nicknames :lowh-facts)
+  (:use :cl :lessp :local-time :rollback)
   (:export #:anon #:with-anon
 	   #:with #:bound-p #:collect #:first-bound #:let-with
 	   #:add #:rm
-	   #:*db* #:*db-path* #:clear-db #:save-db #:load-db #:make-db
-	   #:with-transaction
+	   #:db #:*db* #:*db-path* #:*db-log-path-defaults*
+           #:clear-db #:db-path #:db-log-path #:save-db #:load-db
+           #:transaction-var #:with-transaction
 	   #:binding-p #:collect-bindings))

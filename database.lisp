@@ -20,12 +20,19 @@
 
 ;;  Database
 
-(defstruct db
-  (index-spo (make-index #'fact-spo-lessp))
-  (index-pos (make-index #'fact-pos-lessp))
-  (index-osp (make-index #'fact-osp-lessp)))
+(defclass db ()
+  ((index-spo :initform (make-index #'fact-spo-lessp)
+              :reader db-index-spo)
+   (index-pos :initform (make-index #'fact-pos-lessp)
+              :reader db-index-pos)
+   (index-osp :initform (make-index #'fact-osp-lessp)
+              :reader db-index-osp)))
 
-(defun db-fact (db fact)
+(defgeneric db-fact (db fact))
+(defgeneric db-indexes-insert (db fact))
+(defgeneric db-indexes-delete (db fact))
+
+(defmethod db-fact ((db db) fact)
   (index-get (db-index-spo db) fact))
 
 ;;  Database operations on indexes
@@ -34,14 +41,14 @@
   (setf (rollback-function 'db-indexes-insert) 'db-indexes-delete)
   (setf (rollback-function 'db-indexes-delete) 'db-indexes-insert))
 
-(defun db-indexes-insert (db fact)
+(defmethod db-indexes-insert ((db db) fact)
   (with-rollback*
     (index-insert (db-index-spo db) fact)
     (index-insert (db-index-pos db) fact)
     (index-insert (db-index-osp db) fact)
     (log-transaction-operation db-indexes-insert db fact)))
 
-(defun db-indexes-delete (db fact)
+(defmethod db-indexes-delete ((db db) fact)
   (with-rollback*
     (index-delete (db-index-spo db) fact)
     (index-delete (db-index-pos db) fact)
@@ -50,7 +57,7 @@
 
 ;;  High level database operations
 
-(defvar *db* (make-db))
+(defvar *db* (make-instance 'db))
 
 (setf *transaction-vars* nil)
 (transaction-var *db* '*db*)
@@ -63,7 +70,7 @@
       (unintern sym pkg))))
 
 (defun clear-db ()
-  (setf *db* (make-db))
+  (setf *db* (make-instance 'db))
   (setf *transaction-vars* nil)
   (transaction-var *db* '*db*)
   (clear-package :facts.anon))
