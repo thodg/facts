@@ -28,7 +28,10 @@
 (defvar *transaction-mutex* (sb-thread:make-mutex :name "transaction-mutex"))
 
 (defun transaction-var (value name)
-  (pushnew (cons value name) *transaction-vars* :key #'car :test #'eq))
+  (let ((cell (rassoc name *transaction-vars* :test #'eq)))
+    (if cell
+        (setf (car cell) value)
+        (push (cons value name) *transaction-vars*))))
 
 (defun transaction-vars ()
   *transaction-vars*)
