@@ -22,6 +22,8 @@
 
 (defvar *transaction* nil)
 (defvar *db-path* nil)
+(defvar *db-path-defaults* (make-pathname :type "facts"))
+(defvar *db-log-path-defaults* (make-pathname :type "facts-log"))
 (defvar *transaction-vars* nil)
 (defvar *transaction-mutex* (sb-thread:make-mutex :name "transaction-mutex"))
 
@@ -42,18 +44,28 @@
      (push (list ',op ,@args)
 	   (transaction-log *transaction*))))
 
+(defun db-path ()
+  (and *db-path*
+       (merge-pathnames *db-path* *db-path-defaults*)))
+
+(defun db-log-path ()
+  (and *db-path*
+       (merge-pathnames *db-path* *db-log-path-defaults*)))
+
 (defun commit-transaction (tx)
-  (when *db-path*
-    (ensure-directories-exist *db-path*)
-    (with-open-file (out (make-pathname :name "facts-log" :type "lisp"
-					:defaults *db-path*)
-			 :direction :output
-			 :if-exists :append
-			 :if-does-not-exist :create)
-      (dolist (operation (reverse (transaction-log tx)))
-	(write (sublis (transaction-vars) operation)
-	       :stream out :readably t)
-	(fresh-line out))))
+  (let ((path (db-log-path)))
+    (when path
+      (ensure-directories-exist path)
+      (with-open-file (out path
+                           :direction :output
+                           :if-exists :append
+                           :if-does-not-exist :create)
+        (dolist (operation (reverse (transaction-log tx)))
+          (write (sublis (transaction-vars) operation)
+                 :stream out
+                 :readably t
+                 :pretty nil)
+          (fresh-line out)))))
   (setf (transaction-completed tx) t))
 
 (defun rollback-transaction (tx)
