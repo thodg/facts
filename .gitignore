@@ -2,3 +2,9 @@
 \#*\#
 .\#*
 *.fasl
+/doc/*.aux
+/doc/*.log
+/doc/*.nav
+/doc/*.out
+/doc/*.snm
+/doc/*.toc

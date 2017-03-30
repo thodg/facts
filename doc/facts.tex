@@ -1,0 +1,112 @@
+\documentclass{beamer}
+
+\usepackage[frenchb]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{tikz}
+\usetikzlibrary{calc,shapes.multipart,chains,arrows}
+
+\usetheme{Warsaw}
+
+\title{CL-FACTS}
+\author{Thomas de Grivel <thomasdegrivel@gmail.com>}
+\institute{ELS 2017}
+\date{2017-04-03}
+
+\renewcommand{\UrlFont}{\scriptsize}
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\newcommand{\snode}[2]{\node(#1)[item]{\ensuremath{#2}}}
+
+\begin{frame}
+  Unlabelled Skip Lists
+  \begin{itemize}
+  \item {\bf Skip Lists} : fast, better parallelization than trees.
+    \begin{itemize}
+    \item Probabillistic data structure.
+    \item Search, insert, delete : $O(log\ n)$.
+    \item Single link updates are atomic, no locking needed.
+    \end{itemize}
+    \begin{center}
+    \begin{tikzpicture}[
+        start chain,
+        every node/.style={above,rectangle,minimum height=1mm,minimum width=1mm,
+          thick},
+        skip3/.style={draw,rectangle split, rectangle split parts=3, draw},
+        skip2/.style={draw,rectangle split, rectangle split parts=2, draw},
+        skip1/.style={draw,rectangle split, rectangle split parts=1, draw},
+        >=stealth
+      ]
+      \node[skip3](A) at (0,0) {}; \node(AA) at (0,-0.5) {A};
+      \node[skip1](B) at (1,0) {}; \node(BB) at (1,-0.5) {B};
+      \node[skip2](C) at (2,0) {}; \node(CC) at (2,-0.5) {C};
+      \node[skip1](D) at (3,0) {}; \node(DD) at (3,-0.5) {D};
+      \node[skip1](E) at (4,0) {}; \node(EE) at (4,-0.5) {E};
+      \node[skip3](F) at (5,0) {}; \node(FF) at (5,-0.5) {F};
+      \node[skip1](G) at (6,0) {}; \node(GG) at (6,-0.5) {G};
+      \node[skip1](H) at (7,0) {}; \node(HH) at (7,-0.5) {H};
+      \draw[*->] let \p1=(A.one),  \p2=(F.west) in (\x1,\y1+2) -- (\x2,\y1+2);
+      \draw[*->] let \p1=(A.two),  \p2=(C.west) in (\x1,\y1+2) -- (\x2,\y1+2);
+      \draw[*->] let \p1=(A.three),\p2=(B.west) in (\x1,\y1+2) -- (\x2,\y1+2);
+      \draw[*->] let \p1=(B.one),  \p2=(C.west) in (\x1,\y1+2) -- (\x2,\y1+2);
+      \draw[*->] let \p1=(C.one),  \p2=(F.west) in (\x1,\y1+2) -- (\x2,\y1+2);
+      \draw[*->] let \p1=(C.two),  \p2=(D.west) in (\x1,\y1+2) -- (\x2,\y1+2);
+      \draw[*->] let \p1=(D.one),  \p2=(E.west) in (\x1,\y1+2) -- (\x2,\y1+2);
+      \draw[*->] let \p1=(E.one),  \p2=(F.west) in (\x1,\y1+2) -- (\x2,\y1+2);
+      \draw[*->] let \p1=(F.three),\p2=(G.west) in (\x1,\y1+2) -- (\x2,\y1+2);
+      \draw[*->] let \p1=(G.one),  \p2=(H.west) in (\x1,\y1+2) -- (\x2,\y1+2);
+    \end{tikzpicture}
+    \end{center}
+  \item {\bf Only values}, no keys. Content addressed memory.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  Triple store
+  \begin{itemize}
+  \item {\bf Store} as much data as you want as {\bf triples} $\{Subject, Predicate, Object\}$.
+  \item {\bf Iterate} on queries with $[0..3]$ unknown ?values (sic).
+  \item Three {\bf sorted indexes} : $\{S, P, O\}$, $\{P, O, S\}$, $\{O, S, P\}$.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  Transactions
+  \begin{itemize}
+  \item All operations on database are {\bf logged to a file}.
+  \item Transactions can be aborted with defined {\bf rollback functions}.
+  \item {\bf Persistence} : at startup the log is replayed and the database dumped.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  Future
+  \begin{itemize}
+  \item {\bf Disk storage}, for now all data is in-memory.
+  \item {\bf Computed facts} inferred from added facts.
+  \item {\bf Events} with pattern matching on inserts and deletes.
+  \item User defined {\bf indexes} for arbitrarily complex patterns.
+  \item RDF, turtle...
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  Links
+  \begin{itemize}
+  \item {\bf Facts}\\
+    \url{https://github.com/thodg/facts}
+  \item {\bf Unlabelled Skip List}\\
+    \url{https://github.com/thodg/facts/blob/master/usl.lisp}
+  \item {\bf Indexes}\\
+    \url{https://github.com/thodg/facts/blob/master/index.lisp}
+  \item {\bf Rollback}\\
+    \url{https://github.com/thodg/rollback}
+  \end{itemize}
+\end{frame}
+
+\end{document}
