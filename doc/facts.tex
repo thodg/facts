@@ -5,6 +5,8 @@
 \usepackage[utf8]{inputenc}
 \usepackage{tikz}
 \usetikzlibrary{calc,shapes.multipart,chains,arrows}
+\usepackage{listings}
+\usepackage{color}
 
 \usetheme{Warsaw}
 
@@ -14,6 +16,8 @@
 \date{2017-04-03}
 
 \renewcommand{\UrlFont}{\scriptsize}
+
+\setbeamertemplate{navigation symbols}{}
 
 \begin{document}
 
@@ -75,6 +79,14 @@
   \end{itemize}
 \end{frame}
 
+\begin{frame}
+  FACTS:WITH
+  \medskip
+  {\small
+    \lstinputlisting[language=Lisp]{with.lisp}
+  }
+\end{frame}
+    
 \begin{frame}
   Transactions
   \begin{itemize}
