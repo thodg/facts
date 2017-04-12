@@ -46,14 +46,16 @@
     (index-insert (db-index-spo db) fact)
     (index-insert (db-index-pos db) fact)
     (index-insert (db-index-osp db) fact)
-    (log-transaction-operation db-indexes-insert db fact)))
+    (log-transaction-operation db-indexes-insert db fact))
+  fact)
 
 (defmethod db-indexes-delete ((db db) fact)
   (with-rollback*
     (index-delete (db-index-spo db) fact)
     (index-delete (db-index-pos db) fact)
     (index-delete (db-index-osp db) fact)
-    (log-transaction-operation db-indexes-delete db fact)))
+    (log-transaction-operation db-indexes-delete db fact))
+  fact)
 
 ;;  High level database operations
 
