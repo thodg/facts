@@ -18,9 +18,6 @@
 
 (in-package :facts)
 
-(defmethod print-object ((x simple-base-string) s)
-  (format s "#.(coerce ~S 'simple-base-string)" (coerce x 'simple-string)))
-
 (defun save-db (&key into (readably t))
   (etypecase into
     ((or string pathname) (with-open-file (stream into
