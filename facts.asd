@@ -26,7 +26,7 @@
   :author "Thomas de Grivel <thomas@lowh.net>"
   :version "0.2"
   :description "in-memory graph database"
-  :depends-on ("lessp" "rollback")
+  :depends-on ("lessp" "local-time" "rollback")
   :components
   ((:file "package")
    (:file "fact" :depends-on ("package"))
