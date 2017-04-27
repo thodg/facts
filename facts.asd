@@ -1,7 +1,7 @@
 ;;
 ;;  facts - in-memory graph database
 ;;
-;;  Copyright 2011-2014 Thomas de Grivel <thomas@lowh.net>
+;;  Copyright 2011-2017 Thomas de Grivel <thoxdg@gmail.com>
 ;;
 ;;  Permission to use, copy, modify, and distribute this software for any
 ;;  purpose with or without fee is hereby granted, provided that the above
@@ -23,7 +23,7 @@
 
 (defsystem :facts
   :name "facts"
-  :author "Thomas de Grivel <thomas@lowh.net>"
+  :author "Thomas de Grivel <thoxdg@gmail.com>"
   :version "0.2"
   :description "in-memory graph database"
   :depends-on ("lessp" "local-time" "rollback")
