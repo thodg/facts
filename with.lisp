@@ -165,3 +165,9 @@ You should provide exactly one unbound variable."
 (defmacro rm (specs)
   `(with-transaction
      (mapc #'db-delete (collect-facts ,specs))))
+
+;;  Without
+
+(defmacro without (binding-specs &body body)
+  `(unless (with ,binding-specs (return t))
+     ,@body))
