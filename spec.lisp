@@ -42,6 +42,21 @@
 					 "-"))))
 	  bindings))
 
+;;  Ordering of join patterns
+
+(defun fact-binding-count (x)
+  (+ (if (binding-p (pop x)) 1 0)
+     (if (binding-p (pop x)) 1 0)
+     (if (binding-p (pop x)) 1 0)))
+
+(defun pattern< (a b)
+  (< (fact-binding-count a)
+     (fact-binding-count b)))
+
+(defun sort-bindings (pattern)
+  "Transforms ((?s ?p ?o) (?s x y)) into ((?s x y) (?s ?p ?o)). Huge optimization."
+  (sort pattern #'pattern<))
+
 ;;  Fact specifications
 
 (defun expand-spec (spec)

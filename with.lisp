@@ -97,7 +97,7 @@
        ,@body)))
 
 (defmacro with (binding-specs &body body)
-  `(with/expanded ,(expand-specs binding-specs)
+  `(with/expanded ,(sort-bindings (expand-specs binding-specs))
      ,@body))
 
 ;;  With sugar, please
