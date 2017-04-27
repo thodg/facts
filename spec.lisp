@@ -57,4 +57,16 @@
 				 nil))))))
 
 (defun expand-specs (specs)
+  "
+Facts specification
+
+For any values of subject S, predicate P, object O we can write a fact as a triple :
+    (S P O)
+A join between multiple facts is written as a set of facts :
+    ((S1 P1 O1) ... (Sn Pn On))
+For more predicates and objects for the same subject we can also write :
+    ((S P1 O1 ... Pn On))
+which is equivalent to :
+    ((S P1 O1) ... (S Pn On))
+"
   (mapcan #'expand-spec specs))
