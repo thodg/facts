@@ -27,4 +27,4 @@
 	   #:db #:*db* #:*db-path* #:*db-log-path-defaults*
            #:clear-db #:db-path #:db-log-path #:save-db #:load-db
            #:transaction-var #:with-transaction
-	   #:binding-p #:collect-bindings))
+	   #:binding-p #:collect-bindings #:sort-bindings))
