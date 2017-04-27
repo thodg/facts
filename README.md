@@ -66,8 +66,8 @@ testing the presence or absence of triples (facts).
 
 ```common-lisp
 (defun movie-title (movie)
-  (facts:with ((?movie :is-a :movie
-                       :title ?title))
+  (facts:with ((movie :is-a :movie
+                      :title ?title))
     (return ?title)))
 ```
 
@@ -75,8 +75,8 @@ is equivalent to
 
 ```common-lisp
 (defun movie-title (movie)
-  (facts:with ((?movie :is-a :movie)
-               (?movie :title ?title))
+  (facts:with ((movie :is-a :movie)
+               (movie :title ?title))
     (return ?title)))
 ```
 
@@ -84,8 +84,8 @@ which is itself equivalent to
 
 ```common-lisp
 (defun movie-title (movie)
-  (facts:with ((?movie :is-a :movie))
-    (facts:with ((?movie :title ?title))
+  (facts:with ((movie :is-a :movie))
+    (facts:with ((movie :title ?title))
       (return ?title))))
 ```
 
