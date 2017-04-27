@@ -34,8 +34,8 @@ Adds facts (triples) to the database. Triples can be grouped by subject.
                            :actor "Harison Ford"
                            :actor "Rutger Hauer")
            ("Snow White" :is-a :movie
-	   	  	 :director "William Cottrell"
-			 :director "David Hand"))
+                         :director "William Cottrell"
+                         :director "David Hand"))
 ```
 
 ```common-lisp
@@ -46,9 +46,9 @@ Adds facts (triples) to the database. Triples can be grouped by subject.
                    :actor "Rutger Hauer"))
 
 (facts:add (?movie :is-a :movie
-	   	   :title "Snow White and the Seven Dwarfs"
-	   	   :director "William Cottrell"
-		   :director "David Hand"))
+                   :title "Snow White and the Seven Dwarfs"
+                   :director "William Cottrell"
+                   :director "David Hand"))
 ```
 
 The second version with `?movie` will generate an anonymous symbol prefixed with `movie-`.
@@ -67,7 +67,7 @@ testing the presence or absence of triples (facts).
 ```common-lisp
 (defun movie-title (movie)
   (facts:with ((?movie :is-a :movie
-    	               :title ?title))
+                       :title ?title))
     (return ?title)))
 ```
 
@@ -76,7 +76,7 @@ is equivalent to
 ```common-lisp
 (defun movie-title (movie)
   (facts:with ((?movie :is-a :movie)
-  	       (?movie :title ?title))
+               (?movie :title ?title))
     (return ?title)))
 ```
 
@@ -93,8 +93,8 @@ Multiple queries on the same subject can be grouped together easily :
 
 ```common-lisp
 (facts:with ((?movie :is-a :movie
-	    	     :title ?title
-	    	     :director ?director))
+                     :title ?title
+                     :director ?director))
   (format t "~A directed ~A~%" ?director ?title))
 ```
 
