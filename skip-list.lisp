@@ -56,8 +56,8 @@
 #+test
 (defun test-usl-node ()
   (let ((a (make-usl-node nil 2))
-	(b (make-usl-node #(1 2 3) 2))
-	(c (make-usl-node #(1 2 9) 1)))
+        (b (make-usl-node #(1 2 3) 2))
+        (c (make-usl-node #(1 2 9) 1)))
     (setf (usl-node-link a 0) b)
     (setf (usl-node-link a 1) b)
     (setf (usl-node-link b 0) c)
@@ -72,26 +72,26 @@
 #+test
 (defun test-height-repartition (fn max-height spacing)
   (declare (type (positive-fixnum 1) max-height)
-	   (type (positive-fixnum 2) spacing)
-	   (type (function (fixnum fixnum) fixnum) fn)
-	   (optimize (speed 3)))
+           (type (positive-fixnum 2) spacing)
+           (type (function (fixnum fixnum) fixnum) fn)
+           (optimize (speed 3)))
   (let ((height (make-array max-height
-			    :element-type 'fixnum
-			    :initial-element 0))
-	(rounds #1=1000000))
+                            :element-type 'fixnum
+                            :initial-element 0))
+        (rounds #1=1000000))
     (declare (type positive-fixnum rounds))
     (format t "~&~S : ~D rounds, max-height ~D, spacing ~D~%"
-	    fn rounds max-height spacing)
+            fn rounds max-height spacing)
     (force-output)
     (dotimes (i rounds)
       (incf (the (integer 0 #1#)
-	      (aref height (1- (the positive-fixnum
-				 (funcall fn max-height spacing)))))))
+              (aref height (1- (the positive-fixnum
+                                 (funcall fn max-height spacing)))))))
     (dotimes (i max-height)
       (format t "height ~3D | p ~9,6F | 1/~D~%"
-	      (1+ i)
-	      (/ (aref height i) rounds)
-	      (ceiling rounds (1+ (aref height i)))))
+              (1+ i)
+              (/ (aref height i) rounds)
+              (ceiling rounds (1+ (aref height i)))))
     (terpri)
     (force-output)))
 
@@ -100,11 +100,11 @@
   "Returns a random level for a new skip-list node, following Pugh's pattern of 
 L1: 50%, L2: 25%, L3: 12.5%, ..."
   (declare (type fixnum spacing max-level)
-	   (optimize speed))
+           (optimize speed))
   (assert (= 2 spacing))
   (do ((level 1 (sb-ext:truly-the fixnum (1+ level))))
       ((or (= level max-level)
-	   (= (random 4) 3)) ;; 
+           (= (random 4) 3)) ;; 
        level)
     (declare (type fixnum level))))
 
@@ -154,14 +154,14 @@ L1: 50%, L2: 25%, L3: 12.5%, ..."
 #+test
 (defun usl-random-height* (max-height spacing)
   (declare (type (positive-fixnum 1) max-height)
-	   (type (positive-fixnum 2) spacing)
-	   (optimize (speed 3)))
+           (type (positive-fixnum 2) spacing)
+           (optimize (speed 3)))
   (let ((u spacing)
-	(n max-height))
+        (n max-height))
     (the positive-fixnum
       (1+ (mod (- n (ceiling (log (1+ (random (the positive-fixnum (expt u n))))
-				  u)))
-	       n)))))
+                                  u)))
+               n)))))
 
 #+test
 (time (test-height-repartition #'usl-random-height* 8 2))
@@ -169,14 +169,14 @@ L1: 50%, L2: 25%, L3: 12.5%, ..."
 
 (defun usl-random-height (max-height spacing)
   (declare (type (positive-fixnum 1) max-height)
-	   (type (positive-fixnum 2) spacing)
-	   (optimize (speed 3)))
+           (type (positive-fixnum 2) spacing)
+           (optimize (speed 3)))
   (let* ((u spacing)
-	 (k (the positive-fixnum (random (expt u max-height)))))
+         (k (the positive-fixnum (random (expt u max-height)))))
     (do ((uʳ 1 (sb-ext:truly-the positive-fixnum (* u uʳ)))
-	 (r 0 (1+ r)))
-	((< k uʳ)
-	 (the fixnum (1+ (mod (- max-height r) max-height))))
+         (r 0 (1+ r)))
+        ((< k uʳ)
+         (the fixnum (1+ (mod (- max-height r) max-height))))
       (declare (type positive-fixnum uʳ r)))))
 
 #+test
@@ -202,17 +202,17 @@ and the stored value if VALUE was found."
   (declare (type usl usl))
   (with-slots (lessp head) (the usl usl)
     (labels ((usl-find/node (node)
-	       (declare (type usl-node node))
-	       ;; We have (lessp node value) => t
-	       (let ((next (usl-node-link node 0)))
-		 (if next
-		     (let ((next-value (usl-node-value next)))
-		       (if (funcall lessp next-value value)
-			   (usl-find/node next)
-			   (if (funcall lessp value next-value)
-			       (values node nil)
-			       (values node next-value))))
-		     (values node nil)))))
+               (declare (type usl-node node))
+               ;; We have (lessp node value) => t
+               (let ((next (usl-node-link node 0)))
+                 (if next
+                     (let ((next-value (usl-node-value next)))
+                       (if (funcall lessp next-value value)
+                           (usl-find/node next)
+                           (if (funcall lessp value next-value)
+                               (values node nil)
+                               (values node next-value))))
+                     (values node nil)))))
       (usl-find/node head))))
 
 ;;  Insert
@@ -221,17 +221,17 @@ and the stored value if VALUE was found."
   ;;  FIXME: level
   (let ((new (make-usl-node value 1)))
     (setf (usl-node-link new 0) (usl-node-link node 0)
-	  (usl-node-link node 0) new)
+          (usl-node-link node 0) new)
     new))
 
 (defun usl-insert (usl value)
   ;;  FIXME: level
   (multiple-value-bind (node found) (usl-find usl value)
     (if found
-	(usl-node-value node)
-	(progn
-	  (incf (usl-length usl))
-	  (usl-node-value (usl-node-insert node value))))))
+        (usl-node-value node)
+        (progn
+          (incf (usl-length usl))
+          (usl-node-value (usl-node-insert node value))))))
 
 #+test
 (defun test-usl-insert ()
@@ -256,8 +256,8 @@ and the stored value if VALUE was found."
 #+test
 (let ((usl (test-usl-insert)))
   (mapcar (lambda (x)
-	    (format t "~&Get ~S -> ~S" x (usl-get usl x)))
-	  (list 1 #(0 0 0) #(1 2 2) #(0 0 1) #(1 0 0) #(3 3 3) #(2 2 2))))
+            (format t "~&Get ~S -> ~S" x (usl-get usl x)))
+          (list 1 #(0 0 0) #(1 2 2) #(0 0 1) #(1 0 0) #(3 3 3) #(2 2 2))))
 
 ;;  Each
 
@@ -265,21 +265,21 @@ and the stored value if VALUE was found."
   ;;  FIXME: level
   (with-slots (lessp head) usl
     (labels ((usl-each/node (node)
-	       (when node
-		 (unless (and end
-			      (funcall lessp end (usl-node-value node)))
-		   (funcall fn (usl-node-value node))
-		   (usl-each/node (usl-node-link node 0))))))
+               (when node
+                 (unless (and end
+                              (funcall lessp end (usl-node-value node)))
+                   (funcall fn (usl-node-value node))
+                   (usl-each/node (usl-node-link node 0))))))
       (usl-each/node (multiple-value-bind (node found) (usl-find usl start)
-		       (if found
-			   node
-			   (usl-node-link node 0)))))))
+                       (if found
+                           node
+                           (usl-node-link node 0)))))))
 
 #+test
 (defun test-usl-each ()
   (usl-each (test-usl-insert)
-	    (lambda (fact)
-	      (format t "~&each ~S~%" fact))))
+            (lambda (fact)
+              (format t "~&each ~S~%" fact))))
 
 #+test
 (test-usl-each)
@@ -290,7 +290,7 @@ and the stored value if VALUE was found."
   (multiple-value-bind (pred found) (usl-find usl value)
     (when found
       (setf (usl-node-link pred 0) (usl-node-link (usl-node-link pred 0)
-						  0))
+                                                  0))
       (decf (usl-length usl))
       found)))
 
@@ -299,8 +299,8 @@ and the stored value if VALUE was found."
   (let ((usl (test-usl-insert)))
     (values
      (mapcar (lambda (x)
-	       (usl-delete usl x))
-	     (list #(1 2 2) #(0 0 0) #(1 2 2) #(3 3 3)))
+               (usl-delete usl x))
+             (list #(1 2 2) #(0 0 0) #(1 2 2) #(3 3 3)))
      usl)))
 
 #+test

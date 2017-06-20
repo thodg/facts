@@ -34,29 +34,29 @@
 
 (deftype fixnum* (&optional (start '*) (end '*))
   (let ((start (if (eq '* start) most-negative-fixnum start))
-	(end (if (eq '* end) most-positive-fixnum end)))
+        (end (if (eq '* end) most-positive-fixnum end)))
     `(integer ,start ,end)))
 
 (deftype fixnum-mult (mult &optional (start '*))
   (declare (type (fixnum* 1) mult))
   (let ((start (if (eq '* start)
-		   (truncate most-negative-fixnum mult)
-		   start)))
+                   (truncate most-negative-fixnum mult)
+                   start)))
     `(integer ,start
-	      ,(truncate most-positive-fixnum mult))))
+              ,(truncate most-positive-fixnum mult))))
 
 (deftype fixnum-add (&optional (add '*) (start '*))
   (let ((end (if (eq '* add)
-		 (truncate most-positive-fixnum 2)
-		 (- most-positive-fixnum (the positive-fixnum add)))))
+                 (truncate most-positive-fixnum 2)
+                 (- most-positive-fixnum (the positive-fixnum add)))))
     `(fixnum* ,start ,end)))
 
 (deftype fixnum-float (&optional (start '*) (end '*))
   (let ((start (if (eq '* start) most-negative-fixnum start))
-	(end (if (eq '* end) most-positive-fixnum end)))
+        (end (if (eq '* end) most-positive-fixnum end)))
     (declare (optimize (speed 1)))
     `(long-float ,(coerce start 'long-float)
-		 ,(coerce end 'long-float))))
+                 ,(coerce end 'long-float))))
 
 ;;  Unlabeled skip list node
 
@@ -67,19 +67,19 @@
 (defun make-usl-node (value height)
   (declare (type (fixnum* 1) height))
   (make-usl-node% :value value
-		  :links (make-array height
-				     :element-type '(or usl-node null)
-				     :initial-element nil)))
+                  :links (make-array height
+                                     :element-type '(or usl-node null)
+                                     :initial-element nil)))
 
 (defun usl-node-next (node &optional (level 0))
   (declare (type usl-node node)
-	   (type (fixnum* 0) level))
+           (type (fixnum* 0) level))
   (svref (usl-node-links node) level))
 
 (define-setf-expander usl-node-next (node level &environment env)
   (get-setf-expansion `(svref (usl-node-links (the usl-node ,node))
-			      (the (fixnum* 0) ,level))
-		      env))
+                              (the (fixnum* 0) ,level))
+                      env))
 
 (defun usl-node-height (node)
   (declare (type usl-node node))
@@ -88,8 +88,8 @@
 #+test
 (defun test-usl-node ()
   (let ((a (make-usl-node nil 2))
-	(b (make-usl-node #(1 2 3) 2))
-	(c (make-usl-node #(1 2 9) 1)))
+        (b (make-usl-node #(1 2 3) 2))
+        (c (make-usl-node #(1 2 9) 1)))
     (setf (usl-node-next a 0) b)
     (setf (usl-node-next a 1) b)
     (setf (usl-node-next b 0) c)
@@ -104,40 +104,40 @@
 #+test
 (defun test-height-repartition (fun-fun max-height spacing)
   (declare (type (fixnum* 1) max-height)
-	   (type (function (fixnum fixnum) function) fun-fun))
+           (type (function (fixnum fixnum) function) fun-fun))
   (let ((height (make-array max-height
-			    :element-type 'fixnum
-			    :initial-element 0))
-	(rounds #1=1000000)
-	(fun (funcall fun-fun max-height spacing)))
+                            :element-type 'fixnum
+                            :initial-element 0))
+        (rounds #1=1000000)
+        (fun (funcall fun-fun max-height spacing)))
     (declare (type positive-fixnum rounds))
     (format t "~&~S : ~D rounds, max-height ~D, spacing ~D~%"
-	    fun-fun rounds max-height spacing)
+            fun-fun rounds max-height spacing)
     (force-output)
     (locally (declare (optimize speed))
       (time
        (dotimes (i rounds)
-	 (incf (the (integer 0 #1#)
-		 (aref height (1- (the positive-fixnum
-				    (funcall fun)))))))))
+         (incf (the (integer 0 #1#)
+                 (aref height (1- (the positive-fixnum
+                                    (funcall fun)))))))))
     (dotimes (i max-height)
       (format t "~&height ~3D | p ~9,6F | 1/~D~%"
-	      (1+ i)
-	      (/ (aref height i) rounds)
-	      (round rounds (1+ (aref height i)))))))
+              (1+ i)
+              (/ (aref height i) rounds)
+              (round rounds (1+ (aref height i)))))))
 
 #+test
 (defun cl-skip-list-random-level-fun (max-level spacing)
   "Returns a random level for a new skip-list node, following Pugh's pattern of 
 L1: 50%, L2: 25%, L3: 12.5%, ..."
   (declare (type fixnum spacing max-level)
-	   (optimize speed))
+           (optimize speed))
   (assert (= 2 spacing))
   (lambda ()
     (do ((level 1 (sb-ext:truly-the fixnum (1+ level))))
-	((or (= level max-level)
-	     (= (random 4) 3)) ;; 
-	 level)
+        ((or (= level max-level)
+             (= (random 4) 3)) ;; 
+         level)
       (declare (type fixnum level)))))
 
 #+test
@@ -186,16 +186,16 @@ L1: 50%, L2: 25%, L3: 12.5%, ..."
 #+test
 (defun usl-random-height-fun* (max-height spacing)
   (let* ((u (coerce spacing '(single-float 0.0s0)))
-	 (n (the (fixnum-add 1 1) max-height))
-	 (max (the (fixnum-add 1 1) (ceiling (expt u n)))))
+         (n (the (fixnum-add 1 1) max-height))
+         (max (the (fixnum-add 1 1) (ceiling (expt u n)))))
     (lambda ()
       (declare (optimize (speed 3)))
       (the positive-fixnum
-	(1+ (mod (- n (the fixnum
-			(ceiling
-			 (log (1+ (random max))
-			      u))))
-		 n))))))
+        (1+ (mod (- n (the fixnum
+                        (ceiling
+                         (log (1+ (random max))
+                              u))))
+                 n))))))
 
 (defconstant +e+ 2.718281828459045235360287471352662497757l0)
 
@@ -206,28 +206,28 @@ L1: 50%, L2: 25%, L3: 12.5%, ..."
 
 (defun usl-height-table (max-height spacing)
   (declare (type (fixnum* 2) max-height)
-	   (type (fixnum-float 1 16) spacing))
+           (type (fixnum-float 1 16) spacing))
   (let ((table (make-array max-height
-			   :element-type '(fixnum* 1)
-			   :initial-element 1)))
+                           :element-type '(fixnum* 1)
+                           :initial-element 1)))
     (do ((h 0 (1+ h))
-	 (w spacing (* spacing (the fixnum-float w)))
-	 (end 1.0l0 (+ end w))
-	 (pos 0 end))
-	((= max-height h))
+         (w spacing (* spacing (the fixnum-float w)))
+         (end 1.0l0 (+ end w))
+         (pos 0 end))
+        ((= max-height h))
       (setf (aref table h) (truncate (the fixnum-float end))))
     table))
 
 (defun usl-random-height-fun (max-height spacing)
   (declare (type positive-fixnum max-height)
-	   (optimize speed))
+           (optimize speed))
   (let* ((table (the (simple-array (fixnum* 1) (*))
-		  (usl-height-table max-height spacing)))
-	 (max (the positive-fixnum (1- (aref table (1- (length table)))))))
+                  (usl-height-table max-height spacing)))
+         (max (the positive-fixnum (1- (aref table (1- (length table)))))))
     (lambda ()
       (let ((k (random max)))
-	(do ((i 0 (1+ (the fixnum-add i))))
-	    ((< k (aref table i)) (- max-height i)))))))
+        (do ((i 0 (1+ (the fixnum-add i))))
+            ((< k (aref table i)) (- max-height i)))))))
 
 #+test(test-height-repartition #'usl-random-height-fun 8 2)
 #+test(test-height-repartition #'usl-random-height-fun 8 3)
@@ -235,16 +235,16 @@ L1: 50%, L2: 25%, L3: 12.5%, ..."
 
 (defun usl-random-height (max-height spacing)
   (declare (type (fixnum* 1) max-height)
-	   (type (fixnum-float 1) spacing))
+           (type (fixnum-float 1) spacing))
   (let ((max-height* (load-time-value #1=2))
-	(spacing* (load-time-value #2=+e+))
-	(fun* (load-time-value (usl-random-height-fun #1# #2#))))
+        (spacing* (load-time-value #2=+e+))
+        (fun* (load-time-value (usl-random-height-fun #1# #2#))))
     (declare (type (function () (fixnum* 1)) fun*))
     (unless (and (= max-height* max-height)
-		 (= spacing* spacing))
+                 (= spacing* spacing))
       (setf max-height* max-height
-	    spacing* spacing
-	    fun* (usl-random-height-fun max-height spacing)))
+            spacing* spacing
+            fun* (usl-random-height-fun max-height spacing)))
     (funcall fun*)))
       
 
@@ -264,8 +264,8 @@ L1: 50%, L2: 25%, L3: 12.5%, ..."
 
 (defun make-usl (&key (lessp #'lessp:lessp) (height 3) (spacing +e+))
   (make-usl% :lessp-fun lessp :spacing spacing
-	     :head (make-usl-node nil height)
-	     :height-fun (usl-random-height-fun height spacing)))
+             :head (make-usl-node nil height)
+             :height-fun (usl-random-height-fun height spacing)))
 
 (defun usl-height (usl)
   (usl-node-height (usl-head usl)))
@@ -273,8 +273,8 @@ L1: 50%, L2: 25%, L3: 12.5%, ..."
 (defun usl-lessp (usl a b)
   (declare (type usl usl))
   (funcall (the (function (t t) t)
-	     (usl-lessp-fun usl))
-	   a b))
+             (usl-lessp-fun usl))
+           a b))
 
 ;;  Find
 
@@ -282,24 +282,24 @@ L1: 50%, L2: 25%, L3: 12.5%, ..."
   "Return the in-tree value if found.
 PRED if given must be an array, fill it with predecessor usl nodes."
   (declare (type usl usl)
-	   (type (or null (simple-array t (*))) pred))
+           (type (or null (simple-array t (*))) pred))
   (with-slots (head) usl
     (let ((node head))
       (do ((level (1- (the (fixnum* 1) (usl-node-height head)))
-		  (1- (the (fixnum* 0) level))))
-	  ((< level 0))
+                  (1- (the (fixnum* 0) level))))
+          ((< level 0))
         (do ((n node (usl-node-next n level)))
-	    ((or (null n)
-		 (not (usl-lessp usl (usl-node-value n) value))))
-	  (setf node n))
-	(when (and pred (< level (length pred)))
-	  (setf (aref pred level) node)))
+            ((or (null n)
+                 (not (usl-lessp usl (usl-node-value n) value))))
+          (setf node n))
+        (when (and pred (< level (length pred)))
+          (setf (aref pred level) node)))
       (let* ((next (usl-node-next node 0))
-	     (found (when next
-		      (let ((next-value (usl-node-value next)))
-			(unless (usl-lessp usl value next-value)
-			  value)))))
-	found))))
+             (found (when next
+                      (let ((next-value (usl-node-value next)))
+                        (unless (usl-lessp usl value next-value)
+                          value)))))
+        found))))
 
 (defun usl-cursor (usl &optional value)
   (let ((pred (make-array 1)))
@@ -317,17 +317,17 @@ PRED if given must be an array, fill it with predecessor usl nodes."
   (dotimes (i (length pred))
     (let ((node (aref pred i)))
       (setf (usl-node-next new i) (usl-node-next node i)
-	    (usl-node-next node i) new))))
+            (usl-node-next node i) new))))
 
 (defun usl-insert (usl value)
   (with-slots (head height-fun) usl
     (declare (type (function nil (fixnum* 1)) height-fun))
     (let* ((height (funcall height-fun))
-	   (pred (make-array (the (fixnum* 1) height))))
+           (pred (make-array (the (fixnum* 1) height))))
       (or (usl-find usl value pred)
-	  (progn (usl-node-insert pred (make-usl-node value height))
-		 (incf (usl-length usl))
-		 value)))))
+          (progn (usl-node-insert pred (make-usl-node value height))
+                 (incf (usl-length usl))
+                 value)))))
 
 #+test
 (defun test-usl-insert ()
@@ -352,8 +352,8 @@ PRED if given must be an array, fill it with predecessor usl nodes."
 #+test
 (let ((usl (test-usl-insert)))
   (mapcar (lambda (x)
-	    (format t "~&Get ~S -> ~S" x (usl-get usl x)))
-	  (list 1 #(0 0 0) #(1 2 2) #(0 0 1) #(1 0 0) #(3 3 3) #(2 2 2))))
+            (format t "~&Get ~S -> ~S" x (usl-get usl x)))
+          (list 1 #(0 0 0) #(1 2 2) #(0 0 1) #(1 0 0) #(3 3 3) #(2 2 2))))
 
 ;;  Each
 
@@ -361,15 +361,15 @@ PRED if given must be an array, fill it with predecessor usl nodes."
   (declare (type (function (t) t) fn))
   (do ((node (usl-node-next (usl-cursor usl start)) (usl-node-next node)))
       ((or (null node)
-	   (when end
-	     (usl-lessp usl end (usl-node-value node)))))
+           (when end
+             (usl-lessp usl end (usl-node-value node)))))
     (funcall fn (usl-node-value node))))
 
 #+test
 (defun test-usl-each ()
   (usl-each (test-usl-insert)
-	    (lambda (fact)
-	      (format t "~&each ~S~%" fact))))
+            (lambda (fact)
+              (format t "~&each ~S~%" fact))))
 
 #+test
 (test-usl-each)
@@ -378,13 +378,13 @@ PRED if given must be an array, fill it with predecessor usl nodes."
 
 (defun usl-delete (usl value)
   (let* ((pred (make-array (the (fixnum* 1) (usl-height usl))))
-	 (found (usl-find usl value pred)))
+         (found (usl-find usl value pred)))
     (when found
       (let* ((node (usl-node-next (aref pred 0)))
-	     (height (the (fixnum* 1) (usl-node-height node))))
-	(dotimes (i height)
-	  (setf (usl-node-next (aref pred i) i)
-		(usl-node-next node i))))
+             (height (the (fixnum* 1) (usl-node-height node))))
+        (dotimes (i height)
+          (setf (usl-node-next (aref pred i) i)
+                (usl-node-next node i))))
       (decf (usl-length usl))
       found)))
 
@@ -392,9 +392,9 @@ PRED if given must be an array, fill it with predecessor usl nodes."
 (defun test-usl-delete ()
   (let ((usl (test-usl-insert)))
     (mapcar (lambda (x)
-	      (format t "~&delete ~S -> ~S~%"
-		      x (usl-delete usl x)))
-	    (list #(1 2 2) #(0 0 0) #(1 2 2) #(3 3 3)))
+              (format t "~&delete ~S -> ~S~%"
+                      x (usl-delete usl x)))
+            (list #(1 2 2) #(0 0 0) #(1 2 2) #(3 3 3)))
     (format t "~&~S~%" usl)))
 
 #+test

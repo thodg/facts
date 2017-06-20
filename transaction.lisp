@@ -45,7 +45,7 @@
     (warn "Undefined rollback function for ~S" op))
   `(when *transaction*
      (push (list ',op ,@args)
-	   (transaction-log *transaction*))))
+           (transaction-log *transaction*))))
 
 (defun db-path ()
   (and *db-path*
@@ -77,22 +77,22 @@
 
 (defmacro with-mutex ((mutex timeout) &body body)
   (let ((g!mutex (gensym "MUTEX-"))
-	(g!result (gensym "RESULT-")))
+        (g!result (gensym "RESULT-")))
     `(let ((,g!mutex ,mutex)
-	   ,g!result)
+           ,g!result)
        (if (sb-thread:with-mutex (,g!mutex :wait-p t)
-	     (setf ,g!result (progn ,@body))
-	     t)
-	   ,g!result
-	   (error "Could not acquire ~S for ~D seconds."
-		  ,g!mutex ,timeout)))))
+             (setf ,g!result (progn ,@body))
+             t)
+           ,g!result
+           (error "Could not acquire ~S for ~D seconds."
+                  ,g!mutex ,timeout)))))
 
 (defmacro with-transaction (&body body)
   `(if *transaction*
        (progn ,@body)
        (with-mutex (*transaction-mutex* 1)
-	 (let ((*transaction* (make-transaction)))
-	   (unwind-protect (prog1 (progn ,@body)
-			     (commit-transaction *transaction*))
-	     (unless (transaction-completed *transaction*)
-	       (rollback-transaction *transaction*)))))))
+         (let ((*transaction* (make-transaction)))
+           (unwind-protect (prog1 (progn ,@body)
+                             (commit-transaction *transaction*))
+             (unless (transaction-completed *transaction*)
+               (rollback-transaction *transaction*)))))))

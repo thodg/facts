@@ -27,8 +27,8 @@
 (defun make-fact/v (spec-or-subject &optional predicate (object nil object-p))
   (the fact/v
     (if object-p
-	(make-array 3 :initial-contents (list spec-or-subject predicate object))
-	(make-array 3 :initial-contents (the fact/l spec-or-subject)))))
+        (make-array 3 :initial-contents (list spec-or-subject predicate object))
+        (make-array 3 :initial-contents (the fact/l spec-or-subject)))))
 
 (defun fact/v-subject (f)
   (svref f 0))

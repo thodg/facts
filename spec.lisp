@@ -28,19 +28,19 @@
   (typecase form
     (null bindings)
     (symbol (if (binding-p form)
-		(pushnew form bindings)
-		bindings))
+                (pushnew form bindings)
+                bindings))
     (cons (collect-bindings (car form)
-			    (collect-bindings (cdr form)
-					      bindings)))
+                            (collect-bindings (cdr form)
+                                              bindings)))
     (t bindings)))
 
 (defun gensym-bindings (bindings)
   (mapcar (lambda (b)
-	    (cons b (gensym (concatenate 'string
-					 (string-upcase (subseq (string b) 1))
-					 "-"))))
-	  bindings))
+            (cons b (gensym (concatenate 'string
+                                         (string-upcase (subseq (string b) 1))
+                                         "-"))))
+          bindings))
 
 ;;  Ordering of join patterns
 
@@ -62,14 +62,14 @@
 (defun expand-spec (spec)
   (destructuring-bind (s p o &rest more-p-o) spec
     (labels ((expand/po (p-o-list result)
-	       (if (endp p-o-list)
-		   result
-		   (destructuring-bind (p o &rest list) p-o-list
-		     (expand/po list (cons `(,s ,p ,o)
-					   result))))))
+               (if (endp p-o-list)
+                   result
+                   (destructuring-bind (p o &rest list) p-o-list
+                     (expand/po list (cons `(,s ,p ,o)
+                                           result))))))
       (nreverse (expand/po more-p-o
-			   (cons `(,s ,p ,o)
-				 nil))))))
+                           (cons `(,s ,p ,o)
+                                 nil))))))
 
 (defun expand-specs (specs)
   "

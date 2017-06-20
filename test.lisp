@@ -29,9 +29,9 @@
   (format t "~&~S ~S ~S~&" ?s ?p ?o))
 
 (llrbtree:map-tree (lambda (key value)
-		     (format t "~&~S -> ~S~%" key value))
-		   (db-pos-tree *db*)
-		   :START (MAKE-FACT/V NIL nil NIL))
+                     (format t "~&~S -> ~S~%" key value))
+                   (db-pos-tree *db*)
+                   :START (MAKE-FACT/V NIL nil NIL))
 
 (macroexpand-1
  (third
@@ -47,4 +47,4 @@
        (?p 'id ?id)
        (?p 'score ?score))
   (format t "~S~%" (list (list ?p 'score ?score)
-			 (list ?p 'id ?id))))
+                         (list ?p 'id ?id))))

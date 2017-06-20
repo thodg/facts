@@ -66,8 +66,8 @@
 
 (defun clear-package (package)
   (let ((pkg (typecase package
-	       (package package)
-	       (t (find-package package)))))
+               (package package)
+               (t (find-package package)))))
     (do-symbols (sym pkg)
       (unintern sym pkg))))
 
@@ -83,7 +83,7 @@
 (defun db-insert (subject predicate object &optional (db *db*))
   (let ((fact (make-fact/v subject predicate object)))
     (or (db-fact db fact)
-	(db-indexes-insert db fact))))
+        (db-indexes-insert db fact))))
 
 (defun db-delete (fact &optional (db *db*))
   (let ((fact (db-fact db fact)))
@@ -92,13 +92,13 @@
 
 (defmacro db-each ((var-s var-p var-o) (tree &key start end) &body body)
   (let ((g!fact (gensym "FACT-"))
-	(g!value (gensym "VALUE-")))
+        (g!value (gensym "VALUE-")))
     `(index-each (,tree *db*)
-		 (lambda (,g!fact)
-		   (let ((,var-s (fact/v-subject   ,g!fact))
-			 (,var-p (fact/v-predicate ,g!fact))
-			 (,var-o (fact/v-object    ,g!fact)))
-		     ,@body
-		     (values)))
-		 ,@(when start `(:start ,start))
-		 ,@(when end   `(:end ,end)))))
+                 (lambda (,g!fact)
+                   (let ((,var-s (fact/v-subject   ,g!fact))
+                         (,var-p (fact/v-predicate ,g!fact))
+                         (,var-o (fact/v-object    ,g!fact)))
+                     ,@body
+                     (values)))
+                 ,@(when start `(:start ,start))
+                 ,@(when end   `(:end ,end)))))
