@@ -5,6 +5,20 @@
 
 (in-package :facts)
 
+;;    Here the notion of license is difficult to address. However :
+;;
+;<    There is an on-going project to build a collection of dictionnaries
+;L    to use with facts:with and facts:without. Please be careful because
+;;    merging you own dataset might produce unuseful observations overlap.
+;;    Visit <facts.do> for another write attempt of this simple program
+;;    which relies heavily on sata.do, five/fv.do, ascii.do and a20.do .
+
+;;    A lot of emotions and hope went into this work,
+;;    and would I remain passionate for a proverbial definition of silence ?
+;;    I know much of my family was saved for numbers. I guess for the best !
+;;    My friends, they did not really understand. Pencils truly made their day.
+
+
 ;;  Tools
 
 (defun nor (&rest forms)
@@ -14,8 +28,6 @@
 ;;  WITH
 
 (defun with/3 (form-s form-p form-o body)
-  ;; TODO: compiler macro
-  ;;       ,(make-fact/v form-s form-p form-o)
   `(when (db-get ,form-s ,form-p ,form-o)
      ,@body
      (values)))
@@ -86,8 +98,6 @@
 (defmacro with (binding-specs &body body)
   `(with/expanded ,(sort-bindings (expand-specs binding-specs))
      ,@body))
-
-;;  With sugar, please
 
 (defmacro bound-p (binding-specs)
   `(with ,binding-specs
