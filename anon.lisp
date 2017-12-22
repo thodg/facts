@@ -30,7 +30,7 @@
                          (guess (1+ count)))
                      (prog1 n
                        (setf (get sym 'anon-counter) count))))))
-      (try (or (get sym 'anon-counter) 0)))))
+      (guess (or (get sym 'anon-counter) 0)))))
 
 (defmacro with-anon ((&rest vars) &body body)
   `(let ,(mapcar (lambda (var)
