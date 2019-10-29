@@ -157,6 +157,11 @@ You should provide exactly one unbound variable."
                      `(db-insert ,@fact))
                    (expand-specs specs))))))
 
+(defun add* (&rest specs)
+  (with-transaction
+    (dolist (fact (expand-specs specs))
+      (apply #'db-insert fact))))
+
 ;;  RM
 
 (defmacro rm (specs)

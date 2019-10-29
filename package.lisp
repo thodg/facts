@@ -10,7 +10,7 @@
   (:export #:anon #:with-anon
            #:with #:bound-p #:collect #:first-bound #:let-with
            #:without
-           #:add #:rm
+           #:add #:add* #:rm
            #:db #:*db* #:*db-path* #:*db-log-path-defaults*
            #:clear-db #:db-path #:db-log-path #:save-db #:load-db
            #:transaction-var #:with-transaction
