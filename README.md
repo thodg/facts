@@ -18,8 +18,8 @@ Requirements
 ------------
 
 You will need :
-* https://github.com/thodg/lessp
-* https://github.com/thodg/rollback
+* https://github.com/cl-facts/lessp
+* https://github.com/cl-facts/rollback
 
 
 Usage
