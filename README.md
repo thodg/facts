@@ -56,7 +56,7 @@ It is considered a more clean and efficient way to abstract identifiers.
 
 ### FACTS:RM &rest SPECS
 ```common-lisp
-(facts:rm (?movie :actor "Harison Ford"))
+(facts:rm ((?movie :actor "Harison Ford")))
 ```
 
 ### FACTS:WITH SPECS &body BODY
